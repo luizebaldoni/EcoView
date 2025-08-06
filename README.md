@@ -31,14 +31,14 @@ config:
   layout: dagre
 ---
 flowchart TD
-    E["Views.py"] -- Show data graphs --> A["Frontend: Dashboard Web"]
-    B["API: Django Backend"] -- Validating and processing --> C["Models.py"]
-    C -- Save and recover --> D[("SQLite")]
-    D -- Search and show --> C
-    B -- Send POST --> E
-    F["Hardware: ESP32"] -- Converted and packed --> H["Json File"]
-    H -- Send data_sensors --> B
-    G["Sensors"] -- Analog or digital Sinal --> F
+    E["**Views.py**"] -- **Show data graphs** --> A["**Frontend: Dashboard Web**"]
+    B["**API: Django Backend**"] -- **Validating and processing** --> C["**Models.py**"]
+    C -- **Save and recover** --> D[("**SQLite**")]
+    D -- **Search and show** --> C
+    B -- **Send POST** --> E
+    F["**Hardware: ESP32**"] -- **Converted and packed** --> H["**Json File**"]
+    H -- **Send data_sensors** --> B
+    G["**Sensors**"] -- **Analog or digital Sinal** --> F
      E:::Backend
      E:::Backend
      A:::Frontend
@@ -58,5 +58,13 @@ flowchart TD
     classDef Banco fill:#cff,stroke:#333,stroke-width:2px
     classDef Hardware fill:#FFE0B2, color:#000000
     classDef Aqua stroke-width:1px, stroke-dasharray:none, stroke:#46EDC8, fill:#DEFFF8, color:#378E7A
-    style G stroke:#000000
+    style E color:#000000
+    style A color:#000000 
+    style B color:#000000
+    style C color:#000000
+    style D color:#000000
+    style F color:#000000
+    style H color:#000000
+    style G stroke:#000000,color:#000000
+
 ```
