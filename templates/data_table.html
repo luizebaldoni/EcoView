@@ -1,43 +1,46 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4"><i class="bi bi-table me-2"></i>Todos os Dados dos Sensores</h1>
+
+<h1 class="mb-4"><i class="bi bi-table me-2"></i>Dados Breeze Vegetal</h1>
 
 <div class="table-responsive mb-4">
     <table class="table table-striped table-hover">
         <thead class="table-success">
             <tr>
                 <th>Data/Hora</th>
-                <th>Temp 1 (°C)</th>
-                <th>Temp 2 (°C)</th>
-                <th>Umidade 1 (%)</th>
+                <th>DHT 1</th>
+                <th>DHT 2</th>
+                <th>DHT 3</th>
+                <th>DS2018B 1</th>
+                <th>DS2018B 2</th>
+                <th>DS2018B 3</th>
+                <th>DS2018B 4</th>
+                <th>DS2018B 5</th>
+                <th>DS2018B 6</th>
                 <th>UV 1</th>
-                <th>Vento 1 (m/s)</th>
-                <th>Bateria (%)</th>
-                <th>Dispositivo</th>
+                <th>UV 2</th>
+                <th>Vento 1</th>
+                <th>Vento 2</th>
             </tr>
         </thead>
         <tbody>
             {% for reading in page_obj %}
             <tr>
                 <td>{{ reading.timestamp|date:"d/m/Y H:i" }}</td>
-                <td>{{ reading.sensor1|floatformat:1 }}</td>
-                <td>{{ reading.sensor2|floatformat:1 }}</td>
-                <td>{{ reading.sensor7|floatformat:1 }}</td>
-                <td>{{ reading.sensor10|floatformat:1 }}</td>
-                <td>{{ reading.sensor12|floatformat:1 }}</td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-success" role="progressbar"
-                             style="width: {{ reading.battery_level }}%"
-                             aria-valuenow="{{ reading.battery_level }}"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            {{ reading.battery_level }}%
-                        </div>
-                    </div>
-                </td>
-                <td>{{ reading.device_id|truncatechars:8|default:"N/A" }}</td>
+                <td>{{ reading.sensor1 }}</td>
+                <td>{{ reading.sensor2 }}</td>
+                <td>{{ reading.sensor3 }}</td>
+                <td>{{ reading.sensor4 }}</td>
+                <td>{{ reading.sensor5 }}</td>
+                <td>{{ reading.sensor6 }}</td>
+                <td>{{ reading.sensor7 }}</td>
+                <td>{{ reading.sensor8 }}</td>
+                <td>{{ reading.sensor9 }}</td>
+                <td>{{ reading.sensor10 }}</td>
+                <td>{{ reading.sensor11 }}</td>
+                <td>{{ reading.sensor12 }}</td>
+                <td>{{ reading.sensor13 }}</td>
             </tr>
             {% endfor %}
         </tbody>

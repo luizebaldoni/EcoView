@@ -1,16 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <h1 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard de Sensores</h1>
-
 <div class="row mb-4">
     <!-- Current Values Cards -->
     <div class="col-md-4 mb-3">
         <div class="card sensor-card">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-thermometer-half text-danger me-2"></i>Temperatura</h5>
-                <h2 class="card-text">{{ readings.0.sensor1|default:"--" }} °C</h2>
-                <p class="card-text text-muted">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+                <h2 class="card-text" id="temp-value">{{ readings.0.sensor1|default:"--" }} °C</h2>
+                <p class="card-text text-muted" id="temp-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
             </div>
         </div>
     </div>
@@ -19,8 +19,8 @@
         <div class="card sensor-card">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-droplet-half text-primary me-2"></i>Umidade</h5>
-                <h2 class="card-text">{{ readings.0.sensor7|default:"--" }} %</h2>
-                <p class="card-text text-muted">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+                <h2 class="card-text" id="hum-value">{{ readings.0.sensor2|default:"--" }} %</h2>
+                <p class="card-text text-muted" id="hum-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
             </div>
         </div>
     </div>
@@ -29,11 +29,8 @@
         <div class="card sensor-card">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-battery-half text-success me-2"></i>Bateria</h5>
-                <div class="battery-indicator mb-2">
-                    <div class="battery-level" style="width: {{ readings.0.battery_level|default:0 }}%"></div>
-                </div>
-                <h2 class="card-text">{{ readings.0.battery_level|default:"--" }} %</h2>
-                <p class="card-text text-muted">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+                <h2 class="card-text" id="bat-value">{{ readings.0.battery_level|default:"--" }} %</h2>
+                <p class="card-text text-muted" id="bat-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
             </div>
         </div>
     </div>
@@ -78,45 +75,47 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // Temperature Chart
-    const tempCtx = document.getElementById('tempChart').getContext('2d');
-    const tempChart = new Chart(tempCtx, {
-        type: 'line',
-        data: {
-            labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Sensor 1 (°C)',
-                data: [{% for reading in readings %}{{ reading.sensor1 }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                borderColor: 'rgba(220, 53, 69, 1)',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'script.js' %}"></script>
+    <script>
+        // Gráfico de Temperatura
+        const tempCtx = document.getElementById('tempChart').getContext('2d');
+        const tempChart = new Chart(tempCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: [{% for reading in readings %}{{ reading.sensor1 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
 
-    // Humidity Chart
-    const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-    const humidityChart = new Chart(humidityCtx, {
-        type: 'line',
-        data: {
-            labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Sensor 7 (%)',
-                data: [{% for reading in readings %}{{ reading.sensor7 }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                borderColor: 'rgba(13, 110, 253, 1)',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-</script>
+        // Gráfico de Umidade
+        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+        const humidityChart = new Chart(humidityCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Umidade (%)',
+                    data: [{% for reading in readings %}{{ reading.sensor2 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
 {% endblock %}

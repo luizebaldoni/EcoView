@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4 text-center">Selecione o Dashboard</h1>
+<div class="d-flex gap-4 justify-content-center">
+    <a href="{% url 'dashboard_project' 'breeze' %}" class="btn btn-primary btn-lg">
+        <i class="bi bi-tree-fill me-2"></i>Breeze Vegetal
+    </a>
+    <!-- Adicione outros projetos aqui -->
+    <!-- <a href="{% url 'dashboard_project' 'outro' %}" class="btn btn-secondary btn-lg">Outro Projeto</a> -->
+</div>
+{% endblock %}
+

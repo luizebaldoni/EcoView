@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="text-center mt-5">
+            <h1 class="mb-4">Bem-vindo ao Sistema de Monitoramentos do Ecotecnologias</h1>
+        </div>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <h2 class="mb-4 text-center">Faça login para acessar o painel</h2>
+        {% if form.errors %}
+            <div class="alert alert-danger">Usuário ou senha inválidos.</div>
+        {% endif %}
+        {% if error_message %}
+            {% if error_message == 'Seu cadastro ainda não foi autorizado pelo administrador.' %}
+                <div class="alert alert-warning">Aguarde o administrador liberar o seu login para uso.</div>
+            {% else %}
+                <div class="alert alert-danger">{{ error_message }}</div>
+            {% endif %}
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuário</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Entrar</button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="{% url 'register' %}" class="btn btn-link">Não tem cadastro? Clique aqui</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
