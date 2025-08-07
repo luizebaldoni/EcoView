@@ -1,0 +1,23 @@
+.chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+        .sensor-card {
+            transition: all 0.3s ease;
+        }
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .battery-indicator {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to right, #d9534f, #f0ad4e, #5cb85c);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .battery-level {
+            height: 100%;
+            background-color: #5cb85c;
+        }

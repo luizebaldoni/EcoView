@@ -1,8 +1,10 @@
 from django.urls import path
-from . import views
+from app.views import *
 
 urlpatterns = [
-    path('api/receive/', views.receive_sensor_data, name= 'receive_sensor_data'),
-    path('', views.dashboard, name= 'dashboard'),
-    path('table/', views.data_table, name= 'data_table'),
+	path('', HomeView.as_view(), name='home'),
+    path('api/receive/', receive_sensor_data, name= 'receive_sensor_data'),
+    path('', dashboard, name= 'dashboard'),
+    path('table/', data_table, name= 'data_table'),
+	
 ]

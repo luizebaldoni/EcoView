@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h2>
+                <i class="fas fa-exclamation-triangle"></i>
+                Error {{ status_code }} - {{ error_type }}
+            </h2>
+        </div>
+        <div class="card-body">
+            <h4 class="card-title">{{ error_message }}</h4>
+            <p class="card-text">
+                Ocorreu um erro ao processar sua requisição para <code>{{ request_path }}</code>
+            </p>
+            
+            {% if debug_mode %}
+            <div class="mt-4">
+                <h5>Detalhes técnicos:</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <pre class="mb-0">{{ error_traceback|join:"" }}</pre>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Informações da requisição:</h5>
+                    <ul>
+                        <li><strong>Método:</strong> {{ request_method }}</li>
+                        {% if request_params %}
+                        <li><strong>Parâmetros:</strong> {{ request_params }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Voltar ao Dashboard
+                </a>
+                <button onclick="window.history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar à página anterior
+                </button>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            Ocorrido em: {{ timestamp }}
+        </div>
+    </div>
+</div>
+{% endblock %}
