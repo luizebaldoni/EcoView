@@ -33,7 +33,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Corrigido aqui
+        'DIRS': [str(BASE_DIR / 'templates')],  # Garante que o caminho é string
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

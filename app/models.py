@@ -24,7 +24,7 @@ class SensorReading(models.Model):
 	battery_level = models.FloatField(blank = True, null = True)
 	
 	def __str__(self):
-		return f"Leitura em {self.timestamp}"
+		return f"{self.device_id} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 	
 	class Meta:
 		ordering = ['-timestamp']
