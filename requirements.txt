@@ -1,0 +1,67 @@
+abacatepay==1.0.7
+annotated-types==0.7.0
+asgiref @ file:///C:/b/abs_ae1n0p_8_w/croot/asgiref_1724072476516/work
+asttokens==2.4.1
+blinker==1.9.0
+certifi==2025.8.3
+cffi @ file:///C:/b/abs_29_b57if3f/croot/cffi_1736184144340/work
+charset-normalizer==3.4.3
+click @ file:///C:/b/abs_bbg7qqz4dk/croot/click_1754477951021/work
+colorama==0.4.6
+comm==0.2.2
+cryptography @ file:///C:/b/abs_cbo_0az6za/croot/cryptography_1753084589654/work
+debugpy==1.8.8
+decorator==5.1.1
+dj-config-url==0.1.1
+dj-database-url==3.0.1
+Django==5.2.4
+django-allauth==65.11.0
+djangorestframework==3.16.1
+dotenv==0.9.9
+executing==2.1.0
+Flask==3.1.2
+gunicorn==23.0.0
+idna==3.10
+ipykernel==6.29.5
+ipython==8.29.0
+itsdangerous==2.2.0
+jedi==0.19.2
+Jinja2==3.1.6
+jupyter_client==8.6.3
+jupyter_core==5.7.2
+MarkupSafe==3.0.3
+matplotlib-inline==0.1.7
+MyApplication==0.1.0
+nest-asyncio==1.6.0
+packaging==25.0
+parso==0.8.4
+pillow @ file:///C:/b/abs_b06nvnir5m/croot/pillow_1752524543576/work
+platformdirs==4.3.6
+prompt_toolkit==3.0.48
+psutil==6.1.0
+psycopg2==2.9.10
+pure_eval==0.2.3
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pydantic==2.11.7
+pydantic_core==2.33.2
+Pygments==2.18.0
+PyJWT @ file:///C:/b/abs_02n5wes3j9/croot/pyjwt_1736178904450/work
+pyserial @ file:///C:/b/abs_38q410cihh/croot/pyserial_1736540571753/work
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.1
+pywin32==308
+pyzmq==26.2.0
+requests==2.32.4
+setuptools==78.1.1
+six==1.16.0
+sqlparse @ file:///C:/b/abs_68npyz0s6_/croot/sqlparse_1734704476369/work
+stack-data==0.6.3
+tornado==6.4.1
+traitlets==5.14.3
+typing-inspection==0.4.1
+typing_extensions==4.14.1
+tzdata==2025.2
+urllib3==2.5.0
+wcwidth==0.2.13
+Werkzeug==3.1.3
+wheel==0.45.1
