@@ -3,4 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.13 (EcoView) (2)" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="django_projects" project-jdk-type="Python SDK" />
 </project>

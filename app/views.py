@@ -3,6 +3,7 @@ import traceback
 from datetime import timedelta
 from venv import logger
 
+from django import forms
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,6 +15,7 @@ from django.db.models import Avg, Max, Min
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 from rest_framework.renderers import *
@@ -21,7 +23,8 @@ from rest_framework.request import *
 from rest_framework.views import *
 
 from config import settings
-from .models import SensorReading
+from .models import SensorReading, CartaoRFID, AccessLog
+from django.views.decorators.csrf import csrf_exempt
 
 
 class HomeView(LoginRequiredMixin, APIView):
@@ -467,39 +470,35 @@ def data_table(request):
 
 
 @login_required(login_url='login')
-def dashboard_project(request, project):
-    """
-    Dashboard dinâmico por projeto
-    """
-    # Exemplo: filtrar por projeto, aqui só Breeze Vegetal
-    if project == 'breeze':
-        time_threshold = timezone.now() - timedelta(hours=24)
-        readings = SensorReading.objects.filter(timestamp__gte=time_threshold).order_by('timestamp')
-        context = {
-            'readings': readings,
-            'project': 'Breeze Vegetal',
+def access_log_list(request):
+    logs = AccessLog.objects.select_related('cartao').order_by('-timestamp')
+    paginator = Paginator(logs, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'access_log_list.html', {'page_obj': page_obj})
+
+class CartaoRFIDForm(forms.ModelForm):
+    class Meta:
+        model = CartaoRFID
+        fields = ['uid', 'nome', 'nome_pessoa', 'email', 'funcao', 'matricula']
+        labels = {
+            'uid': 'UID do Cartão',
+            'nome': 'Nome do Cartão (opcional)',
+            'nome_pessoa': 'Nome da Pessoa',
+            'email': 'E-mail',
+            'funcao': 'Função',
+            'matricula': 'Matrícula',
         }
-        return render(request, 'dashboard.html', context)
-    # Adicione outros projetos aqui
-    return render(request, 'error.html', {'error': 'Projeto não encontrado'})
 
 @login_required(login_url='login')
-def data_table_project(request, project):
-    """
-    Tabela de dados dinâmica por projeto
-    """
-    if project == 'breeze':
-        all_readings = SensorReading.objects.all().order_by('-timestamp')
-        paginator = Paginator(all_readings, 50)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        context = {
-            'page_obj': page_obj,
-            'project': 'Breeze Vegetal',
-        }
-        return render(request, 'data_table.html', context)
-    # Adicione outros projetos aqui
-    return render(request, 'error.html', {'error': 'Projeto não encontrado'})
+def cadastrar_cartao(request):
+    form = CartaoRFIDForm(request.POST or None)
+    message = None
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        message = 'Cartão cadastrado com sucesso!'
+        form = CartaoRFIDForm()  # Limpa o formulário
+    return render(request, 'cadastrar_cartao.html', {'form': form, 'message': message})
 
 #====== LOGIN FORM ======#
 class LoginForm(forms.Form):
@@ -530,3 +529,26 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+@csrf_exempt  # Para facilitar testes com ESP, ideal usar autenticação depois
+def verifica_cartao(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            cartao = CartaoRFID.objects.filter(uid=uid).first()
+            autorizado = cartao is not None
+            # Registra o acesso
+            AccessLog.objects.create(uid=uid, cartao=cartao, autorizado=autorizado)
+            return JsonResponse({"autorizado": autorizado})
+        except Exception as e:
+            return JsonResponse({"erro": str(e)}, status=400)
+    return JsonResponse({"erro": "Método não permitido"}, status=405)
+
+def dashboard_project(request, project):
+    # Exemplo simples, ajuste conforme sua lógica
+    return render(request, 'dashboard.html', {'project': project})
+
+def data_table_project(request, project):
+    # Exemplo simples, ajuste conforme sua lógica
+    return render(request, 'data_table.html', {'project': project})

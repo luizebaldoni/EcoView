@@ -14,4 +14,7 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/', register_view, name='register'),
 	path('logout/', logout_view, name='logout'),
+    path('api/verifica_cartao/', verifica_cartao, name='verifica_cartao'),
+    path('acessos/', access_log_list, name='access_log_list'),
+    path('cartoes/cadastrar/', cadastrar_cartao, name='cadastrar_cartao'),
 ]

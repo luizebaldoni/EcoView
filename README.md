@@ -10,6 +10,7 @@ Sistema completo para coleta, armazenamento e visualização de dados em tempo r
 - [Funcionalidades](#funcionalidades)
 - [Tecnologias Utilizadas](#️-tecnologias-utilizadas)
 - [Como Usar](#como-usar)
+- [Autenticação RFID](#autenticacao-rfid)
 - [Arquitetura de Software](#arquitetura-de-software)
 - [Contribuição](#contribuição)
 - [Licença](#licença)
@@ -23,15 +24,17 @@ Sistema completo para coleta, armazenamento e visualização de dados em tempo r
 - Suporte a múltiplos sensores e dispositivos
 - Exportação de dados (CSV, JSON, Excel)
 - Atualização de firmware OTA (Over the Air)
+- **Autenticação de acesso via cartão RFID**
 
 ## 🛠️ Tecnologias Utilizadas
 
 | Componente | Tecnologias                                                         |
 |------------|---------------------------------------------------------------------|
 | Backend    | Python 3.9+, Django 4.2, Django REST Framework, SQLite              |
-| Firmware   | C++ (Arduino Core), ESP32                                           |
+| Firmware   | C++ (Arduino Core), ESP32/ESP8266                                   |
 | Frontend   | HTML5, Bootstrap 5, Chart.js (para gráficos de histórico)           |
 | Sensores   | DS18B20, DHT-11, UV, Anemômetro                                    |
+| RFID       | Leitor RFID + ESP8266                                               |
 
 ## Como Usar
 
@@ -39,6 +42,25 @@ Sistema completo para coleta, armazenamento e visualização de dados em tempo r
 - Cadastre-se e aguarde autorização do administrador.
 - Após login, acesse o dashboard para visualizar dados em tempo real.
 - Exporte dados conforme necessário.
+
+## Autenticação RFID
+
+O sistema permite cadastrar cartões RFID e controlar o acesso físico via ESP8266:
+- Cadastre os cartões RFID pelo painel de administração.
+- A ESP8266 envia o UID do cartão via POST para `/api/verifica_cartao/`.
+- O backend responde se o cartão está autorizado (`{"autorizado": true}` ou `false`).
+- A ESP8266 pode então liberar ou negar o acesso conforme a resposta.
+
+Exemplo de requisição ESP8266:
+```cpp
+HTTPClient http;
+http.begin("http://SEU_SERVIDOR/api/verifica_cartao/");
+http.addHeader("Content-Type", "application/json");
+String payload = "{\"uid\":\"12345678\"}";
+int httpResponseCode = http.POST(payload);
+String resposta = http.getString();
+http.end();
+```
 
 ## Arquitetura de Software
 ```mermaid
@@ -98,10 +120,7 @@ Este projeto está sob a licença MIT.
 
 ## Contato
 
-- **Luize Baldoni de Oliveira**  
-  Acadêmica de Engenharia de Computação - UFSM  
-  Técnica em Informática para Internet - CTISM/UFSM  
-  E-mail: [oliveira.luize@acad.ufsm.br](mailto:oliveira.luize@acad.ufsm.br)
-
-**Grupo de Pesquisas em Modelagem HidroAmbiental e Ecotecnologias - UFSM**  
-
+Para dúvidas, sugestões ou colaborações, entre em contato:
+- [Seu Nome](mailto:seu.email@exemplo.com)  
+- Grupo de Pesquisas em Modelagem HidroAmbiental e Ecotecnologias - UFSM
+- [LinkedIn](https://www.linkedin.com/in/seu-perfil)

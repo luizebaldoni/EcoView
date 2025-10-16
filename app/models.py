@@ -28,3 +28,25 @@ class SensorReading(models.Model):
 	
 	class Meta:
 		ordering = ['-timestamp']
+
+# --- RFID Card Model ---
+class CartaoRFID(models.Model):
+	uid = models.CharField(max_length=32, unique=True)
+	nome = models.CharField(max_length=100, blank=True)
+	nome_pessoa = models.CharField(max_length=100)
+	email = models.EmailField()
+	funcao = models.CharField(max_length=100)
+	matricula = models.CharField(max_length=50)
+
+	def __str__(self):
+		return f"{self.nome_pessoa} - {self.uid}" if self.nome_pessoa else self.uid
+
+class AccessLog(models.Model):
+    uid = models.CharField(max_length=32)
+    cartao = models.ForeignKey(CartaoRFID, null=True, blank=True, on_delete=models.SET_NULL)
+    autorizado = models.BooleanField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        status = "Autorizado" if self.autorizado else "Negado"
+        return f"{self.uid} - {status} em {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

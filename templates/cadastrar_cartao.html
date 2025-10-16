@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Cadastrar Cartão RFID</h2>
+    {% if message %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="uid" class="form-label">UID do Cartão</label>
+            {{ form.uid }}
+        </div>
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Cartão (opcional)</label>
+            {{ form.nome }}
+        </div>
+        <div class="mb-3">
+            <label for="nome_pessoa" class="form-label">Nome da Pessoa</label>
+            {{ form.nome_pessoa }}
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">E-mail</label>
+            {{ form.email }}
+        </div>
+        <div class="mb-3">
+            <label for="funcao" class="form-label">Função</label>
+            {{ form.funcao }}
+        </div>
+        <div class="mb-3">
+            <label for="matricula" class="form-label">Matrícula</label>
+            {{ form.matricula }}
+        </div>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+</div>
+{% endblock %}

@@ -6,8 +6,11 @@ SECRET_KEY = 'django-insecure-tw9o&ao7_0y!(@nkok_7$pd0ye2oq%rnr58&$m8ay$ly5&r2gs
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.0.100',  # IP local do Ubuntu Server
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -64,6 +67,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = '/var/www/ecomonitoramento/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/var/www/ecomonitoramento/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

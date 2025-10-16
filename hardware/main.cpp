@@ -1,4 +1,5 @@
 /*
+ * MONITORAMENTO BRISE VEGETAL
  * Código ESP32 para envio de dados de sensores ao servidor Django
  * Compatível com a view receive_sensor_data do Django
  * Este código permite que um dispositivo ESP32 colete dados simulados de vários sensores e envie essas informações para um servidor Django via HTTP POST.
