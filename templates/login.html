@@ -1,4 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/login.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="text-center mt-5">
             <h1 class="mb-4">Bem-vindo ao Sistema de Monitoramentos do Ecotecnologias</h1>

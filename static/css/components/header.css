@@ -1,0 +1,32 @@
+/* header.css - estilos do header/site nav */
+.site-header .navbar{
+    padding-top: .4rem;
+    padding-bottom: .4rem;
+}
+.site-header .navbar-brand .brand-text{
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.05rem;
+}
+.site-header .nav-link{
+    color: #333;
+    margin-right: .4rem;
+    transition: color .15s ease, transform .15s ease;
+}
+.site-header .nav-link:hover{
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+.site-header .navbar-nav .btn-outline-success{
+    padding: .25rem .5rem;
+    font-size: .85rem;
+}
+/* make dropdown menu a little more compact */
+.site-header .dropdown-menu{min-width:160px}
+
+@media (max-width: 991px){
+    .site-header .navbar{background: var(--bg-color)}
+    .site-header .navbar-nav{margin-top:.5rem}
+    .site-header .nav-link{padding:.45rem 0}
+}
+

@@ -1,0 +1,4 @@
+/* dashboard.css - regras específicas da dashboard */
+.dashboard-summary{display:flex;gap:1rem;align-items:stretch}
+.dashboard-charts{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+

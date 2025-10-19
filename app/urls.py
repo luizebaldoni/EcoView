@@ -1,20 +1,21 @@
 from django.urls import path
-from app.views import *
+from django.shortcuts import render
+from . import views
 
 urlpatterns = [
-	path('', HomeView.as_view(), name='home'),
-    path('api/receive/', receive_sensor_data, name= 'receive_sensor_data'),
-    path('dashboard/', dashboard, name= 'dashboard'),
-    path('table/', data_table, name= 'data_table'),
-    path('api/latest/', latest_sensor_data, name='latest_sensor_data'),
+    path('', views.HomeView.as_view(), name='home'),
+    path('api/receive/', views.receive_sensor_data, name='receive_sensor_data'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('table/', views.data_table, name='data_table'),
+    path('api/latest/', views.latest_sensor_data, name='latest_sensor_data'),
     path('dashboards/', lambda request: render(request, 'select_dashboard.html'), name='select_dashboard'),
-    path('dashboard/<str:project>/', dashboard_project, name='dashboard_project'),
+    path('dashboard/<str:project>/', views.dashboard_project, name='dashboard_project'),
     path('tables/', lambda request: render(request, 'select_table.html'), name='select_table'),
-    path('table/<str:project>/', data_table_project, name='data_table_project'),
-    path('login/', login_view, name='login'),
-    path('register/', register_view, name='register'),
-	path('logout/', logout_view, name='logout'),
-    path('api/verifica_cartao/', verifica_cartao, name='verifica_cartao'),
-    path('acessos/', access_log_list, name='access_log_list'),
-    path('cartoes/cadastrar/', cadastrar_cartao, name='cadastrar_cartao'),
+    path('table/<str:project>/', views.data_table_project, name='data_table_project'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
+    path('api/verifica_cartao/', views.verifica_cartao, name='verifica_cartao'),
+    path('acessos/', views.access_log_list, name='access_log_list'),
+    path('cartoes/cadastrar/', views.cadastrar_cartao, name='cadastrar_cartao'),
 ]

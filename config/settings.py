@@ -4,9 +4,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-tw9o&ao7_0y!(@nkok_7$pd0ye2oq%rnr58&$m8ay$ly5&r2gs'
 
-DEBUG = False
+# Habilite DEBUG durante desenvolvimento local; em produção, defina como False e use ALLOWED_HOSTS apropriado.
+DEBUG = True
 
+# Adicione o IP do seu servidor Ubuntu (192.168.0.100) e localhost para evitar Bad Request/DisallowedHost
 ALLOWED_HOSTS = [
+    '192.168.0.100', 'localhost', '127.0.0.1',
     '10.5.1.163', '45.168.147.205'  # IP local do Ubuntu Server
 ]
 INSTALLED_APPS = [
@@ -66,6 +69,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '/var/www/ecomonitoramento/static/'
+# Garante que o Django encontre o diretório `static/` no projeto durante desenvolvimento
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/var/www/ecomonitoramento/media/'
 

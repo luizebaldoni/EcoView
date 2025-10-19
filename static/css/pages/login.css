@@ -1,0 +1,11 @@
+/* login.css */
+.login-card{max-width:420px;margin:2rem auto;padding:2rem}
+.login-card .form-control{margin-bottom:0.75rem}
+/* header.css */
+.navbar{
+    background: var(--primary-color) !important;
+}
+.navbar .navbar-brand{font-weight:700}
+.navbar .nav-link{color:#fff}
+.navbar .nav-link.active{opacity:0.95}
+

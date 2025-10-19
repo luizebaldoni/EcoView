@@ -1,0 +1,4 @@
+/* data_table.css - regras para a tabela de dados */
+.table-responsive{max-height:60vh;overflow:auto}
+.table td, .table th{white-space:nowrap}
+
