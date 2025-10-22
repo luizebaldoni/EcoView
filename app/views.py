@@ -145,6 +145,7 @@ def latest_sensor_data(request):
     return JsonResponse({'sensor1': latest.sensor1, 'sensor2': latest.sensor2, 'timestamp': latest.timestamp.strftime('%H:%M'), 'battery': latest.battery_level})
 
 
+@login_required(login_url='login')
 def dashboard(request):
     """
     Dashboard view showing charts and summary of last 24 hours
@@ -197,6 +198,29 @@ def dashboard(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Error in dashboard view: {str(e)}", exc_info=True)
         return render(request, 'error.html', {'error': str(e)})
+
+
+# Protected selection pages (replace lambdas in urls)
+@login_required(login_url='login')
+def select_dashboard(request):
+    return render(request, 'select_dashboard.html')
+
+
+@login_required(login_url='login')
+def select_table(request):
+    return render(request, 'select_table.html')
+
+
+@login_required(login_url='login')
+def dashboard_project(request, project):
+    # Exemplo simples, ajuste conforme sua lógica
+    return render(request, 'dashboard.html', {'project': project})
+
+
+@login_required(login_url='login')
+def data_table_project(request, project):
+    # Exemplo simples, ajuste conforme sua lógica
+    return render(request, 'data_table.html', {'project': project})
 
 
 @login_required(login_url='login')
