@@ -2,16 +2,24 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# --- Configurações de SEGURANÇA e HOSTS ---
+
+# WARNING: Em produção, o ideal é ler esta chave de uma variável de ambiente (.env)
 SECRET_KEY = 'django-insecure-tw9o&ao7_0y!(@nkok_7$pd0ye2oq%rnr58&$m8ay$ly5&r2gs'
 
-# Habilite DEBUG durante desenvolvimento local; em produção, defina como False e use ALLOWED_HOSTS apropriado.
-DEBUG = True
+# CRÍTICO: DEBUG deve ser False em produção
+DEBUG = False
 
-# Adicione o IP do seu servidor Ubuntu (192.168.0.100) e localhost para evitar Bad Request/DisallowedHost
+# CRÍTICO: Todos os IPs/Domínios que o Nginx está servindo
 ALLOWED_HOSTS = [
-    '192.168.0.100', 'localhost', '127.0.0.1',
-    '10.5.1.163', '45.168.147.205'  # IP local do Ubuntu Server
+    '10.5.1.100',  # IP do seu servidor
+    'localhost',
+    '127.0.0.1',
+    # Adicione aqui qualquer domínio futuro ou IP externo que você for usar
 ]
+
+# --- Configurações de Aplicativos e Middleware (Sem Alterações) ---
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,7 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-		'app',  # seu app
+    'app',  # seu app
+    # 'rest_framework', # Opcional se usar DRF
 ]
 
 MIDDLEWARE = [
@@ -37,7 +46,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(BASE_DIR / 'templates')],  # Garante que o caminho é string
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -52,12 +61,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# --- CRÍTICO: Configuração do PostgreSQL para Produção ---
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ecoviewdb',              # Nome do banco de dados criado na Etapa 2
+        'USER': 'ecoviewuser',            # Usuário do banco de dados criado na Etapa 2
+        'PASSWORD': 'sua_senha_muito_forte', # Substitua pela SUA SENHA REAL!
+        'HOST': 'localhost',
+        'PORT': '',                       # Deixe em branco para o padrão (5432)
     }
 }
+
+# --- Configurações de Linguagem e Fuso Horário (Sem Alterações) ---
 
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -67,13 +84,19 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
+# --- CRÍTICO: Configurações de Arquivos Estáticos e Mídia para Nginx ---
+
+# O Nginx servirá arquivos estáticos a partir deste caminho (collectstatic)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/ecomonitoramento/static/'
-# Garante que o Django encontre o diretório `static/` no projeto durante desenvolvimento
+
+# Diretórios estáticos que o Django usa para desenvolvimento
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Arquivos de mídia (uploads de usuário)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/var/www/ecomonitoramento/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
