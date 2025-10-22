@@ -154,24 +154,34 @@ def dashboard(request):
         time_threshold = timezone.now() - timedelta(hours=24)
         readings = SensorReading.objects.filter(timestamp__gte=time_threshold).order_by('timestamp')
 
-        # Get summary statistics
+        # Safely get the last reading (may be None)
+        last_reading = readings.last()
+
+        # Compute aggregates once
+        agg = readings.aggregate(
+            temp_avg=Avg('sensor1'), temp_max=Max('sensor1'), temp_min=Min('sensor1'),
+            hum_avg=Avg('sensor7'), hum_max=Max('sensor7'), hum_min=Min('sensor7'),
+            batt_avg=Avg('battery_level'), batt_min=Min('battery_level')
+        ) if readings.exists() else {}
+
+        # Build summary using safe access
         summary = {
             'temperature': {
-                'current': readings.last().sensor1 if readings.exists() else None,
-                'avg': readings.aggregate(Avg('sensor1'))['sensor1__avg'],
-                'max': readings.aggregate(Max('sensor1'))['sensor1__max'],
-                'min': readings.aggregate(Min('sensor1'))['sensor1__min']
+                'current': last_reading.sensor1 if last_reading else None,
+                'avg': agg.get('temp_avg'),
+                'max': agg.get('temp_max'),
+                'min': agg.get('temp_min')
             },
             'humidity': {
-                'current': readings.last().sensor7 if readings.exists() else None,
-                'avg': readings.aggregate(Avg('sensor7'))['sensor7__avg'],
-                'max': readings.aggregate(Max('sensor7'))['sensor7__max'],
-                'min': readings.aggregate(Min('sensor7'))['sensor7__min']
+                'current': last_reading.sensor7 if last_reading else None,
+                'avg': agg.get('hum_avg'),
+                'max': agg.get('hum_max'),
+                'min': agg.get('hum_min')
             },
             'battery': {
-                'current': readings.last().battery_level if readings.exists() else None,
-                'avg': readings.aggregate(Avg('battery_level'))['battery_level__avg'],
-                'min': readings.aggregate(Min('battery_level'))['battery_level__min']
+                'current': last_reading.battery_level if last_reading else None,
+                'avg': agg.get('batt_avg'),
+                'min': agg.get('batt_min')
             }
         }
 

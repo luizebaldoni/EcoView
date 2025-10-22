@@ -112,8 +112,6 @@ MEDIA_ROOT = os.getenv('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media'))
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Simple logging configuration: console (for gunicorn/nginx) and rotating file in BASE_DIR/logs
-import logging
-from logging.handlers import RotatingFileHandler
 
 LOG_DIR = os.getenv('DJANGO_LOG_DIR', str(BASE_DIR / 'logs'))
 # try to ensure the log directory exists; if not possible, continue (permission errors will raise at runtime)
