@@ -1,24 +1,22 @@
 from pathlib import Path
+import os
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Configurações de SEGURANÇA e HOSTS ---
+# SECRET_KEY should come from environment in production
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-tw9o&ao7_0y!(@nkok_7$pd0ye2oq%rnr58&$m8ay$ly5&r2gs')
 
-# WARNING: Em produção, o ideal é ler esta chave de uma variável de ambiente (.env)
-SECRET_KEY = 'django-insecure-tw9o&ao7_0y!(@nkok_7$pd0ye2oq%rnr58&$m8ay$ly5&r2gs'
+# DEBUG controlled by env var (default True for local dev)
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-# CRÍTICO: DEBUG deve ser False em produção
-DEBUG = False
-
-# CRÍTICO: Todos os IPs/Domínios que o Nginx está servindo
-ALLOWED_HOSTS = [
-    '10.5.1.100',  # IP do seu servidor
-    'localhost',
-    '127.0.0.1',
-    # Adicione aqui qualquer domínio futuro ou IP externo que você for usar
-]
-
-# --- Configurações de Aplicativos e Middleware (Sem Alterações) ---
+# ALLOWED_HOSTS can be provided via comma-separated env var; sensible defaults kept for development
+_default_hosts = ['127.0.0.1', 'localhost']
+_env_hosts = os.getenv('DJANGO_ALLOWED_HOSTS')
+if _env_hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _env_hosts.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = _default_hosts + ['192.168.0.100', '10.5.1.163', '45.168.147.205']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,7 +26,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app',  # seu app
-    # 'rest_framework', # Opcional se usar DRF
 ]
 
 MIDDLEWARE = [
@@ -46,7 +43,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [str(BASE_DIR / 'templates')],  # Garante que o caminho é string
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,20 +58,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# --- CRÍTICO: Configuração do PostgreSQL para Produção ---
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ecoviewdb',              # Nome do banco de dados criado na Etapa 2
-        'USER': 'ecoviewuser',            # Usuário do banco de dados criado na Etapa 2
-        'PASSWORD': 'sua_senha_muito_forte', # Substitua pela SUA SENHA REAL!
-        'HOST': 'localhost',
-        'PORT': '',                       # Deixe em branco para o padrão (5432)
+# Database configuration: supports DATABASE_URL (postgres) or individual PG_* env vars, falls back to sqlite for local development
+DATABASES = {}
+_database_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
+if _database_url:
+    # Parse DATABASE_URL (e.g. postgres://user:pass@host:port/dbname)
+    parsed = urlparse(_database_url)
+    engine = 'django.db.backends.postgresql'
+    DATABASES['default'] = {
+        'ENGINE': engine,
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': parsed.port or 5432,
     }
-}
-
-# --- Configurações de Linguagem e Fuso Horário (Sem Alterações) ---
+else:
+    # Try individual postgres vars
+    if os.getenv('POSTGRES_DB') and os.getenv('POSTGRES_USER'):
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB'),
+            'USER': os.getenv('POSTGRES_USER'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        }
+    else:
+        # Fallback to sqlite for local development
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
 
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -84,19 +99,52 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-# --- CRÍTICO: Configurações de Arquivos Estáticos e Mídia para Nginx ---
-
-# O Nginx servirá arquivos estáticos a partir deste caminho (collectstatic)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Static and media - default to project-local folders, but allow override in env
 STATIC_URL = '/static/'
-
-# Diretórios estáticos que o Django usa para desenvolvimento
+STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', str(BASE_DIR / 'staticfiles'))
+# Garante que o Django encontre o diretório `static/` no projeto durante desenvolvimento
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-
-# Arquivos de mídia (uploads de usuário)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.getenv('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media'))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Simple logging configuration: console (for gunicorn/nginx) and rotating file in BASE_DIR/logs
+import logging
+from logging.handlers import RotatingFileHandler
+
+LOG_DIR = os.getenv('DJANGO_LOG_DIR', str(BASE_DIR / 'logs'))
+# try to ensure the log directory exists; if not possible, continue (permission errors will raise at runtime)
+try:
+    Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(Path(LOG_DIR) / 'django.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+}
