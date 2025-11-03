@@ -1,0 +1,14 @@
+[Unit]
+Description=gunicorn daemon for EcoView
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ecoview
+EnvironmentFile=/var/www/ecoview/.env
+ExecStart=/var/www/ecoview/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/run/gunicorn/ecoview.sock config.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
