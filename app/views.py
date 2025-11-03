@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db.models import Avg, Max, Min
+from django.db.utils import ConnectionDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -21,7 +22,8 @@ from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
 
 from config import settings
-from .models import SensorReading, CartaoRFID, AccessLog
+from django.conf import settings as django_settings
+from .models import SensorReading, CartaoRFID, AccessLog, BriseSensorReading, PavimentosSensorReading
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
@@ -50,49 +52,123 @@ class HomeView(LoginRequiredMixin, TemplateView):
 @csrf_exempt
 def receive_sensor_data(request):
     """
-    API endpoint to receive sensor data from ESP32 devices
-    Expected JSON format:
-    {
-        "sensor1": value, "sensor2": value, ..., "sensor13": value,
-        "device_id": string,
-        "battery": float (0-100)
-    }
+    API endpoint to receive sensor data from ESP32 devices.
+    Payload must include a 'monitoring' field indicating target (e.g. 'brise' or 'pavimentos').
+
+    For 'brise' monitoring it accepts named keys (ds18b20_1..6, dht11_1_temp/hum, uv_1..2, wind_1..2)
+    or the generic sensor1..sensor14 mapping. The function will store readings in the appropriate DB via router.
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method is allowed'}, status=405)
 
     try:
-        # Parse and validate JSON data
         try:
             data = json.loads(request.body.decode('utf-8'))
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
 
-        # Validate required fields
-        required_fields = [f'sensor{i}' for i in range(1, 14)] + ['device_id']
-        missing_fields = [field for field in required_fields if field not in data]
-        if missing_fields:
-            return JsonResponse({'status': 'error', 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
+        monitoring = data.get('monitoring', 'default').lower()
+        device_id = data.get('device_id')
+        if not device_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing required field: device_id'}, status=400)
 
-        # Validate sensor values
-        try:
-            sensor_data = {f'sensor{i}': float(data[f'sensor{i}']) for i in range(1, 14)}
-        except (ValueError, TypeError):
-            return JsonResponse({'status': 'error', 'message': 'All sensor values must be numbers'}, status=400)
+        battery_level = data.get('battery')
+        if battery_level is not None:
+            try:
+                battery_level = float(battery_level)
+            except (ValueError, TypeError):
+                return JsonResponse({'status': 'error', 'message': 'Battery must be a number between 0 and 100'}, status=400)
+            if not 0 <= battery_level <= 100:
+                return JsonResponse({'status': 'error', 'message': 'Battery level must be between 0 and 100'}, status=400)
 
-        # Validate battery level
-        battery_level = float(data.get('battery', 0))
-        if not 0 <= battery_level <= 100:
-            return JsonResponse({'status': 'error', 'message': 'Battery level must be between 0 and 100'}, status=400)
+        # Route to specific model based on monitoring
+        if monitoring == 'brise':
+            # expected named keys mapping for brise
+            expected = ['ds18b20_1','ds18b20_2','ds18b20_3','ds18b20_4','ds18b20_5','ds18b20_6',
+                        'dht11_1_temp','dht11_1_hum','dht11_2_temp','dht11_2_hum',
+                        'uv_1','uv_2','wind_1','wind_2']
+            # accept either named or generic sensor1..sensor14
+            if all(k in data for k in [f'sensor{i}' for i in range(1,15)]):
+                # generic -> map sensor1..sensor14 to brise fields
+                try:
+                    vals = [float(data[f'sensor{i}']) for i in range(1,15)]
+                except (ValueError, TypeError):
+                    return JsonResponse({'status':'error','message':'All sensor values must be numbers'}, status=400)
+                brise_kwargs = {
+                    'ds18b20_1': vals[0], 'ds18b20_2': vals[1], 'ds18b20_3': vals[2], 'ds18b20_4': vals[3], 'ds18b20_5': vals[4], 'ds18b20_6': vals[5],
+                    'dht11_1_temp': vals[6], 'dht11_1_hum': vals[8], 'dht11_2_temp': vals[7], 'dht11_2_hum': vals[9],
+                    'uv_1': vals[10], 'uv_2': vals[11], 'wind_1': vals[12], 'wind_2': vals[13]
+                }
+            else:
+                # named
+                missing = [k for k in expected if k not in data]
+                if missing:
+                    return JsonResponse({'status':'error','message':f'Missing fields for brise: {", ".join(missing)}'}, status=400)
+                try:
+                    brise_kwargs = {k: float(data[k]) for k in expected}
+                except (ValueError, TypeError) as e:
+                    return JsonResponse({'status':'error','message':'Invalid numeric value in payload'}, status=400)
 
-        # Create and save new reading
-        reading = SensorReading(timestamp=timezone.now(), device_id=data['device_id'], battery_level=battery_level, **sensor_data)
-        reading.save()
+            brise_kwargs.update({'device_id': device_id, 'battery_level': battery_level})
+            reading = BriseSensorReading(**brise_kwargs)
+            # Determine which DB alias to use; fall back to default if not configured
+            target_db = 'brise' if ('brise' in getattr(django_settings, 'DATABASES', {}) or 'brise' in getattr(settings, 'DATABASES', {})) else 'default'
+            try:
+                reading.save(using=target_db)
+            except ConnectionDoesNotExist:
+                # fallback to default if the target alias isn't available at runtime
+                reading.save(using='default')
+            return JsonResponse({'status':'success','message':'Brise data saved','id': reading.id, 'timestamp': reading.timestamp.isoformat()})
 
-        return JsonResponse({'status': 'success', 'message': 'Data saved successfully', 'reading_id': reading.id, 'timestamp': reading.timestamp.isoformat()})
+        elif monitoring == 'pavimentos':
+            # simple example for pavimentos: expect sensor_a and sensor_b or sensor1/2
+            if 'sensor_a' in data and 'sensor_b' in data:
+                try:
+                    a = float(data['sensor_a'])
+                    b = float(data['sensor_b'])
+                except (ValueError, TypeError):
+                    return JsonResponse({'status':'error','message':'Invalid numeric value for pavimentos'}, status=400)
+                reading = PavimentosSensorReading(sensor_a=a, sensor_b=b, device_id=device_id, battery_level=battery_level)
+                target_db = 'pavimentos' if ('pavimentos' in getattr(django_settings, 'DATABASES', {}) or 'pavimentos' in getattr(settings, 'DATABASES', {})) else 'default'
+                try:
+                    reading.save(using=target_db)
+                except ConnectionDoesNotExist:
+                    reading.save(using='default')
+                return JsonResponse({'status':'success','message':'Pavimentos data saved','id': reading.id, 'timestamp': reading.timestamp.isoformat()})
+            elif all(k in data for k in ['sensor1','sensor2']):
+                try:
+                    a = float(data['sensor1'])
+                    b = float(data['sensor2'])
+                except (ValueError, TypeError):
+                    return JsonResponse({'status':'error','message':'Invalid numeric value for pavimentos'}, status=400)
+                reading = PavimentosSensorReading(sensor_a=a, sensor_b=b, device_id=device_id, battery_level=battery_level)
+                target_db = 'pavimentos' if ('pavimentos' in getattr(django_settings, 'DATABASES', {}) or 'pavimentos' in getattr(settings, 'DATABASES', {})) else 'default'
+                try:
+                    reading.save(using=target_db)
+                except ConnectionDoesNotExist:
+                    reading.save(using='default')
+                return JsonResponse({'status':'success','message':'Pavimentos data saved','id': reading.id, 'timestamp': reading.timestamp.isoformat()})
+            else:
+                return JsonResponse({'status':'error','message':'Missing fields for pavimentos'}, status=400)
+
+        else:
+            # fallback: store in legacy SensorReading if sensor1..sensor14 are provided
+            generic_keys = [f'sensor{i}' for i in range(1, 15)]
+            if not all(k in data for k in generic_keys):
+                return JsonResponse({'status':'error','message':'Missing generic sensor fields for default storage'}, status=400)
+            try:
+                sensor_vals = {f'sensor{i}': float(data[f'sensor{i}']) for i in range(1,15)}
+            except (ValueError, TypeError):
+                return JsonResponse({'status':'error','message':'All sensor values must be numbers'}, status=400)
+            reading = SensorReading(timestamp=timezone.now(), device_id=device_id, battery_level=battery_level, **sensor_vals)
+            target_db = 'default'
+            try:
+                reading.save(using=target_db)
+            except ConnectionDoesNotExist:
+                reading.save(using='default')
+            return JsonResponse({'status':'success','message':'Data saved to default sensorreading','id': reading.id, 'timestamp': reading.timestamp.isoformat()})
 
     except Exception as e:
-        # Log the error for debugging
         logger = logging.getLogger(__name__)
         logger.error(f"Error processing sensor data: {str(e)}", exc_info=True)
         return JsonResponse({'status': 'error', 'message': 'Internal server error'}, status=500)
@@ -306,7 +382,6 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
-
 
 @csrf_exempt  # Para facilitar testes com ESP, ideal usar autenticação depois
 def verifica_cartao(request):

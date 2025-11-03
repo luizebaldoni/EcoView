@@ -60,21 +60,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database configuration: supports DATABASE_URL (postgres) or individual PG_* env vars, falls back to sqlite for local development
 DATABASES = {}
-_database_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
-if _database_url:
-    # Parse DATABASE_URL (e.g. postgres://user:pass@host:port/dbname)
-    parsed = urlparse(_database_url)
-    engine = 'django.db.backends.postgresql'
-    DATABASES['default'] = {
-        'ENGINE': engine,
-        'NAME': parsed.path.lstrip('/'),
-        'USER': parsed.username,
-        'PASSWORD': parsed.password,
-        'HOST': parsed.hostname,
-        'PORT': parsed.port or 5432,
+# Helper to parse a postgres URL
+def _parse_db_url(url):
+    p = urlparse(url)
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': p.path.lstrip('/'),
+        'USER': p.username,
+        'PASSWORD': p.password,
+        'HOST': p.hostname,
+        'PORT': p.port or 5432,
     }
+
+# Default / primary database (can be sqlite or postgres)
+_default_db = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
+if _default_db:
+    DATABASES['default'] = _parse_db_url(_default_db)
 else:
-    # Try individual postgres vars
     if os.getenv('POSTGRES_DB') and os.getenv('POSTGRES_USER'):
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.postgresql',
@@ -85,11 +87,44 @@ else:
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
         }
     else:
-        # Fallback to sqlite for local development
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
+
+# --- Additional monitoring-specific databases ---
+# You can provide DATABASE_URL_BRISE and DATABASE_URL_PAVIMENTOS (or individual PG_* vars suffixed)
+_database_brise = os.getenv('DATABASE_URL_BRISE') or os.getenv('POSTGRES_URL_BRISE')
+if _database_brise:
+    DATABASES['brise'] = _parse_db_url(_database_brise)
+else:
+    # Optional: allow specifying parts
+    if os.getenv('POSTGRES_DB_BRISE') and os.getenv('POSTGRES_USER_BRISE'):
+        DATABASES['brise'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB_BRISE'),
+            'USER': os.getenv('POSTGRES_USER_BRISE'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD_BRISE', ''),
+            'HOST': os.getenv('POSTGRES_HOST_BRISE', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT_BRISE', '5432'),
+        }
+
+_database_pav = os.getenv('DATABASE_URL_PAVIMENTOS') or os.getenv('POSTGRES_URL_PAVIMENTOS')
+if _database_pav:
+    DATABASES['pavimentos'] = _parse_db_url(_database_pav)
+else:
+    if os.getenv('POSTGRES_DB_PAVIMENTOS') and os.getenv('POSTGRES_USER_PAVIMENTOS'):
+        DATABASES['pavimentos'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB_PAVIMENTOS'),
+            'USER': os.getenv('POSTGRES_USER_PAVIMENTOS'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD_PAVIMENTOS', ''),
+            'HOST': os.getenv('POSTGRES_HOST_PAVIMENTOS', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT_PAVIMENTOS', '5432'),
+        }
+
+# Register DB router to route sensor models to specific databases
+DATABASE_ROUTERS = ['app.dbrouters.MonitoringRouter']
 
 AUTH_PASSWORD_VALIDATORS = []
 
