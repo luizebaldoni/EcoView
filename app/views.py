@@ -23,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from config import settings
 from django.conf import settings as django_settings
-from .models import SensorReading, CartaoRFID, AccessLog, BriseSensorReading, PavimentosSensorReading
+from .models import *
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
