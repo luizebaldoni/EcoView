@@ -1,37 +1,118 @@
-{% extends "base.html" %}
+{% extends "base_after.html" %}
+{% load static %}
+
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Cadastrar Cartão RFID</h2>
-    {% if message %}
-        <div class="alert alert-success">{{ message }}</div>
+<div class="container-fluid px-0">
+
+    {% if request.user.is_staff or request.user.is_superuser %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h4 class="fw-bold mb-3" style="color: #03a75a;"><i class="bi bi-person-plus-fill me-2"></i>Cadastrar / Vincular Novo Cartão RFID</h4>
+
+                    {% if message %}
+                        <div class="alert alert-success py-2">{{ message }}</div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="uid" class="form-label small text-secondary">UID do Cartão</label>
+                                {{ form.uid }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="nome_pessoa" class="form-label small text-secondary">Nome da Pessoa</label>
+                                {{ form.nome_pessoa }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="email" class="form-label small text-secondary">E-mail</label>
+                                {{ form.email }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="funcao" class="form-label small text-secondary">Função</label>
+                                {{ form.funcao }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="matricula" class="form-label small text-secondary">Matrícula</label>
+                                {{ form.matricula }}
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <button type="submit" class="btn text-white w-100 fw-bold py-2" style="background-color: #03a75a; border-radius: 8px;">
+                                    <i class="bi bi-check-lg me-1"></i> Salvar Cadastro
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Administrativa Geral de Ponto -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-list-check me-2"></i>Registro Geral de Ponto (Todos os Usuários)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuário / Pessoa</th>
+                            <th>Cartão RFID (UID)</th>
+                            <th>Data / Hora da Batida</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aqui virá o loop de todos os registros para o Admin -->
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Nenhum registro recente encontrado.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- ================= VISÃO DO USUÁRIO COMUM (MEU PONTO) ================= -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h4 class="fw-bold mb-1" style="color: #03a75a;"><i class="bi bi-clock-fill me-2"></i>Meu Espelho de Ponto</h4>
+                            <p class="text-muted small mb-0">Acompanhe seus horários de acesso e permanência registrados via RFID.</p>
+                        </div>
+                        <span class="badge bg-success px-3 py-2" style="font-size: 12px; border-radius: 20px;">Cartão Vinculado Ativo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Pessoal de Horários -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-3 text-secondary" style="font-size: 16px;"><i class="bi bi-calendar-range me-2"></i>Meus Registros Recentes</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Horário de Entrada</th>
+                            <th>Horário de Saída</th>
+                            <th>Tempo de Permanência</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loop exclusivo dos dados do request.user logado -->
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Você ainda não possui registros de ponto neste período.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="uid" class="form-label">UID do Cartão</label>
-            {{ form.uid }}
-        </div>
-        <div class="mb-3">
-            <label for="nome" class="form-label">Nome do Cartão (opcional)</label>
-            {{ form.nome }}
-        </div>
-        <div class="mb-3">
-            <label for="nome_pessoa" class="form-label">Nome da Pessoa</label>
-            {{ form.nome_pessoa }}
-        </div>
-        <div class="mb-3">
-            <label for="email" class="form-label">E-mail</label>
-            {{ form.email }}
-        </div>
-        <div class="mb-3">
-            <label for="funcao" class="form-label">Função</label>
-            {{ form.funcao }}
-        </div>
-        <div class="mb-3">
-            <label for="matricula" class="form-label">Matrícula</label>
-            {{ form.matricula }}
-        </div>
-        <button type="submit" class="btn btn-primary">Cadastrar</button>
-    </form>
+
 </div>
 {% endblock %}

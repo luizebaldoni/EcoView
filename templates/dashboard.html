@@ -1,125 +1,167 @@
-{% extends "base.html" %}
+{% extends "base_after.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
-<h1 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard de Sensores</h1>
-<div class="row mb-4">
-    <!-- Current Values Cards -->
-    <div class="col-md-4 mb-3">
-        <div class="card sensor-card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-thermometer-half text-danger me-2"></i>Temperatura</h5>
-                <h2 class="card-text" id="temp-value">{{ readings.0.sensor1|default:"--" }} °C</h2>
-                <p class="card-text text-muted" id="temp-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+<style>
+    .metric-card {
+        border: none;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+    }
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    .dash-card {
+        background: #ffffff;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+</style>
+
+<!-- Linha de Cartões Superiores (Métricas Atuais) -->
+<div class="row g-4 mb-4">
+    <!-- Temperatura -->
+    <div class="col-md-4">
+        <div class="metric-card bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span class="text-muted small d-block">Métrica Atual</span>
+                    <h6 class="fw-bold mb-0 text-secondary">Temperatura</h6>
+                </div>
+                <div class="icon-box" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-thermometer-half"></i>
+                </div>
             </div>
+            <h3 class="fw-bold mb-1" id="temp-value">{{ readings.0.sensor1|default:"--" }} °C</h3>
+            <span class="text-success small fw-semibold"><i class="bi bi-arrow-up-short"></i> Tempo real</span>
         </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-        <div class="card sensor-card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-droplet-half text-primary me-2"></i>Umidade</h5>
-                <h2 class="card-text" id="hum-value">{{ readings.0.sensor2|default:"--" }} %</h2>
-                <p class="card-text text-muted" id="hum-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+    <!-- Umidade -->
+    <div class="col-md-4">
+        <div class="metric-card bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span class="text-muted small d-block">Métrica Atual</span>
+                    <h6 class="fw-bold mb-0 text-secondary">Umidade</h6>
+                </div>
+                <div class="icon-box" style="background: rgba(2, 174, 238, 0.1); color: #02aeee;">
+                    <i class="bi bi-droplet-half"></i>
+                </div>
             </div>
+            <h3 class="fw-bold mb-1" id="hum-value">{{ readings.0.sensor2|default:"--" }} %</h3>
+            <span class="text-success small fw-semibold"><i class="bi bi-arrow-up-short"></i> Estável</span>
         </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-        <div class="card sensor-card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-battery-half text-success me-2"></i>Bateria</h5>
-                <h2 class="card-text" id="bat-value">{{ readings.0.battery_level|default:"--" }} %</h2>
-                <p class="card-text text-muted" id="bat-time">Última atualização: {{ readings.0.timestamp|time:"H:i"|default:"--:--" }}</p>
+    <!-- Bateria -->
+    <div class="col-md-4">
+        <div class="metric-card bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span class="text-muted small d-block">Status do Sistema</span>
+                    <h6 class="fw-bold mb-0 text-secondary">Bateria</h6>
+                </div>
+                <div class="icon-box" style="background: rgba(3, 167, 90, 0.1); color: #03a75a;">
+                    <i class="bi bi-battery-half"></i>
+                </div>
             </div>
+            <h3 class="fw-bold mb-1" id="bat-value">{{ readings.0.battery_level|default:"--" }} %</h3>
+            <span class="text-success small fw-semibold"><i class="bi bi-check-circle"></i> Operacional</span>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Temperature Chart -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header bg-danger text-white">
-                <i class="bi bi-thermometer-half me-2"></i>Temperatura (Últimas 24h)
+<!-- Seção de Gráficos em Grid -->
+<div class="row g-4">
+    <!-- Gráfico de Temperatura -->
+    <div class="col-lg-6">
+        <div class="dash-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark m-0" style="font-size: 16px;">Variação de Temperatura (24h)</h5>
+                <span class="badge bg-light text-muted">Sensor 1</span>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="tempChart"></canvas>
-                </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="tempChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Humidity Chart -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <i class="bi bi-droplet-half me-2"></i>Umidade (Últimas 24h)
+    <!-- Gráfico de Umidade -->
+    <div class="col-lg-6">
+        <div class="dash-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark m-0" style="font-size: 16px;">Variação de Umidade (24h)</h5>
+                <span class="badge bg-light text-muted">Sensor 2</span>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="humidityChart"></canvas>
-                </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="humidityChart"></canvas>
             </div>
         </div>
     </div>
-</div>
-
-<div class="d-flex justify-content-between mt-4">
-    <a href="{% url 'data_table' %}" class="btn btn-success">
-        <i class="bi bi-table me-1"></i>Ver Todos os Dados
-    </a>
-    <span class="text-muted">Atualizado em: {% now "H:i" %}</span>
 </div>
 {% endblock %}
 
 {% block scripts %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'script.js' %}"></script>
-    <script>
-        // Gráfico de Temperatura
-        const tempCtx = document.getElementById('tempChart').getContext('2d');
-        const tempChart = new Chart(tempCtx, {
-            type: 'line',
-            data: {
-                labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Temperatura (°C)',
-                    data: [{% for reading in readings %}{{ reading.sensor1 }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                    borderColor: 'rgba(220, 53, 69, 1)',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
+<script>
+    // Gráfico de Temperatura
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    new Chart(tempCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Temperatura (°C)',
+                data: [{% for reading in readings %}{{ reading.sensor1 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.08)',
+                tension: 0.3,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
 
-        // Gráfico de Umidade
-        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-        const humidityChart = new Chart(humidityCtx, {
-            type: 'line',
-            data: {
-                labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Umidade (%)',
-                    data: [{% for reading in readings %}{{ reading.sensor2 }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    </script>
+    // Gráfico de Umidade
+    const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+    new Chart(humidityCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for reading in readings %}"{{ reading.timestamp|time:'H:i' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Umidade (%)',
+                data: [{% for reading in readings %}{{ reading.sensor2 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: '#02aeee',
+                backgroundColor: 'rgba(2, 174, 238, 0.08)',
+                tension: 0.3,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
 {% endblock %}

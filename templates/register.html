@@ -1,52 +1,64 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <h2 class="mb-4 text-center">Cadastro</h2>
-        {% if form.errors %}
-            <div class="alert alert-danger">{{ form.errors }}</div>
-        {% endif %}
-        {% if message %}
-            <div class="alert alert-info">{{ message }}</div>
-        {% endif %}
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="first_name" class="form-label">Nome</label>
-                <input type="text" class="form-control" id="first_name" name="first_name" required>
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-lg rounded-4 p-4 bg-white">
+            <div class="text-center mb-3">
+                <h3 class="fw-bold" style="color: #03a75a;">Criar Nova Conta</h3>
+                <p class="text-muted small">Preencha os campos para solicitar acesso ao EcoView</p>
             </div>
-            <div class="mb-3">
-                <label for="last_name" class="form-label">Sobrenome</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" required>
+
+            {% if form.errors %}
+                <div class="alert alert-danger py-2 small">{{ form.errors }}</div>
+            {% endif %}
+            {% if message %}
+                <div class="alert alert-info py-2 small">{{ message }}</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label for="first_name" class="form-label small text-secondary">Nome</label>
+                        <input type="text" class="form-control bg-light border-0" id="first_name" name="first_name" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label for="last_name" class="form-label small text-secondary">Sobrenome</label>
+                        <input type="text" class="form-control bg-light border-0" id="last_name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label for="username" class="form-label small text-secondary">Usuário</label>
+                    <input type="text" class="form-control bg-light border-0" id="username" name="username" required>
+                </div>
+                <div class="mb-2">
+                    <label for="email" class="form-label small text-secondary">E-mail</label>
+                    <input type="email" class="form-control bg-light border-0" id="email" name="email" required>
+                </div>
+                <div class="mb-2">
+                    <label for="password" class="form-label small text-secondary">Senha</label>
+                    <input type="password" class="form-control bg-light border-0" id="password" name="password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="group" class="form-label small text-secondary">Grupo</label>
+                    <select class="form-select bg-light border-0" id="group" name="group" required>
+                        <option value="">Selecione...</option>
+                        <option value="adm">Administrador</option>
+                        <option value="ic">Iniciação Científica</option>
+                        <option value="mestrado">Mestrado</option>
+                        <option value="doutorado">Doutorado</option>
+                        <option value="professor">Professor</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn w-100 fw-bold text-white py-2" style="background-color: #a8ce46; border-radius: 8px;">Cadastrar</button>
+            </form>
+
+            <p class="mt-3 text-center text-muted" style="font-size: 11px;">Após o cadastro, aguarde o administrador liberar seu acesso.</p>
+            <div class="text-center mt-2">
+                <a href="{% url 'login' %}" class="text-decoration-none small" style="color: #0492cf; font-weight: 600;">Já possui cadastro? Faça login</a>
             </div>
-            <div class="mb-3">
-                <label for="username" class="form-label">Usuário</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">E-mail</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <div class="mb-3">
-                <label for="group" class="form-label">Grupo</label>
-                <select class="form-select" id="group" name="group" required>
-                    <option value="">Selecione...</option>
-                    <option value="adm">Administrador</option>
-                    <option value="ic">Iniciação Científica</option>
-                    <option value="mestrado">Mestrado</option>
-                    <option value="doutorado">Doutorado</option>
-                    <option value="professor">Professor</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-success w-100">Cadastrar</button>
-        </form>
-        <p class="mt-3 text-center text-muted">Após o cadastro, aguarde o administrador liberar seu acesso.</p>
-        <div class="text-center mt-3">
-            <a href="{% url 'login' %}" class="btn btn-link">Já possui cadastro? Faça login</a>
         </div>
     </div>
 </div>
