@@ -154,7 +154,10 @@ try:
     Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
 except Exception:
     pass
-
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -180,4 +183,6 @@ LOGGING = {
         'handlers': ['console', 'file'],
         'level': 'INFO',
     },
+
 }
+
