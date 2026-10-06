@@ -16,7 +16,7 @@ _env_hosts = os.getenv('DJANGO_ALLOWED_HOSTS')
 if _env_hosts:
     ALLOWED_HOSTS = [h.strip() for h in _env_hosts.split(',') if h.strip()]
 else:
-    ALLOWED_HOSTS = _default_hosts + ['192.168.0.100', '10.5.1.163', '45.168.147.205']
+    ALLOWED_HOSTS = _default_hosts + ['192.168.0.100', '10.5.1.163', '45.168.147.205', 'ecoteciew.duckdns.org']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
