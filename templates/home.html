@@ -2,16 +2,151 @@
 {% load static %}
 
 {% block content %}
-<div class="text-center mt-5">
-    <h1 class="mb-4">Bem-vindo ao Sistema de Monitoramentos do Ecotecnologias</h1>
-    <p class="lead mb-5">Acesse rapidamente as principais funcionalidades:</p>
-    <div class="d-flex gap-3 justify-content-center">
-        <a href="{% url 'select_dashboard' %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-speedometer2 me-1"></i>Dashboards
-        </a>
-        <a href="{% url 'select_table' %}" class="btn btn-success btn-lg">
-            <i class="bi bi-table me-1"></i>Tabelas de Dados
-        </a>
+<style>
+    :root {
+        --color-lime: #a8ce46;
+        --color-light-blue: #02aeee;
+        --color-green: #03a75a;
+        --color-dark-blue: #0492cf;
+        --bg-dashboard: #f4f7fa;
+    }
+
+    .eco-home-wrapper {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        background: var(--bg-dashboard);
+        border-radius: 20px;
+    }
+
+    .eco-home-container {
+        width: 100%;
+        max-width: 900px;
+        background: #ffffff;
+        padding: 50px 40px;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Detalhe estético superior com as cores do projeto */
+    .eco-home-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, var(--color-light-blue), var(--color-green), var(--color-lime));
+    }
+
+    .eco-home-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 12px;
+    }
+
+    .eco-home-subtitle {
+        font-size: 16px;
+        color: #7f8c8d;
+        margin-bottom: 40px;
+    }
+
+    .eco-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .eco-action-card {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 30px 20px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .eco-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(2, 174, 238, 0.15);
+        border-color: var(--color-light-blue);
+        background: #ffffff;
+    }
+
+    .eco-icon-box {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: #fff;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    .card-dashboard .eco-icon-box {
+        background: linear-gradient(135deg, var(--color-light-blue), var(--color-dark-blue));
+    }
+
+    .card-tables .eco-icon-box {
+        background: linear-gradient(135deg, var(--color-green), var(--color-lime));
+    }
+
+    .eco-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #334155;
+        margin: 0;
+    }
+
+    .eco-card-desc {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0;
+    }
+</style>
+
+<div class="eco-home-wrapper">
+    <div class="eco-home-container">
+        <h1 class="eco-home-title">Bem-vindo ao EcoView</h1>
+        <p class="eco-home-subtitle">Sistema de Monitoramento de Ecotecnologias. Acesse rapidamente as principais funcionalidades:</p>
+
+        <div class="eco-cards-grid">
+            <!-- Card de Dashboards -->
+            <a href="{% url 'select_dashboard' %}" class="eco-action-card card-dashboard">
+                <div class="eco-icon-box">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <div>
+                    <h3 class="eco-card-title">Dashboards</h3>
+                    <p class="eco-card-desc">Visualize gráficos e métricas em tempo real</p>
+                </div>
+            </a>
+
+            <!-- Card de Tabelas de Dados -->
+            <a href="{% url 'select_table' %}" class="eco-action-card card-tables">
+                <div class="eco-icon-box">
+                    <i class="bi bi-table"></i>
+                </div>
+                <div>
+                    <h3 class="eco-card-title">Tabelas de Dados</h3>
+                    <p class="eco-card-desc">Consulte os registros detalhados do sistema</p>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

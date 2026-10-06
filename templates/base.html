@@ -23,64 +23,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Site header -->
-    <header class="site-header">
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-            <div class="container">
-                <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-                    <i class="bi bi-tree-fill me-2 text-success fs-4"></i>
-                    <span class="brand-text">EcoMonitoramentos</span>
-                </a>
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav ms-auto align-items-lg-center">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'select_dashboard' %}">
-                                <i class="bi bi-speedometer2 me-1"></i>
-                                Dashboards
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'select_table' %}">
-                                <i class="bi bi-table me-1"></i>
-                                Tabelas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'access_log_list' %}">
-                                <i class="bi bi-card-list me-1"></i>
-                                Acessos RFID
-                            </a>
-                        </li>
-
-                        {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-1"></i>
-                                {{ user.username }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                                <li><a class="dropdown-item" href="#">Perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Sair</a></li>
-                            </ul>
-                        </li>
-                        {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-sm btn-outline-success ms-2" href="{% url 'login' %}">Entrar</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-
     <!-- Main content area (padronizado) -->
     <main class="page-content container py-4">
         {% block content %}{% endblock %}
@@ -91,7 +33,7 @@
         <div class="container text-center py-3">
             <div class="row align-items-center">
                 <div class="col-md-6 text-md-start mb-2 mb-md-0">
-                    <small class="text-muted">&copy; {{ now|date:"Y" }} Grupo de Modelagem HidroAmbiental e Ecotecnologias UFSM - Todos os direitos reservados</small>
+                    <small class="text-muted">&copy; {{ now|date:"Y" }} Grupo de Modelagem HidroAmbiental e Ecotecnologias UFSM</small>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <small class="text-muted">EcoMonitoramentos • Versão: 1.0</small>

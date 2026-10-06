@@ -1,11 +1,186 @@
-/* login.css */
-.login-card{max-width:420px;margin:2rem auto;padding:2rem}
-.login-card .form-control{margin-bottom:0.75rem}
-/* header.css */
-.navbar{
-    background: var(--primary-color) !important;
-}
-.navbar .navbar-brand{font-weight:700}
-.navbar .nav-link{color:#fff}
-.navbar .nav-link.active{opacity:0.95}
+ :root {
+        --color-lime: #a8ce46;
+        --color-light-blue: #02aeee;
+        --color-green: #03a75a;
+        --color-dark-blue: #0492cf;
+    }
 
+    .eco-login-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        padding: 20px;
+    }
+
+    .eco-container {
+        position: relative;
+        width: 900px;
+        max-width: 100%;
+        height: 550px;
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        display: flex;
+    }
+
+    /* Lado Esquerdo - Imagem e Formas Orgânicas */
+    .eco-left-side {
+        position: relative;
+        width: 45%;
+        background: #f0f7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .eco-shape {
+        position: absolute;
+        background: var(--color-lime);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation: morph 8s ease-in-out infinite alternate;
+        z-index: 1;
+        opacity: 0.85;
+    }
+
+    .eco-shape:nth-child(2) {
+        background: var(--color-light-blue);
+        border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%;
+        animation: morph 10s ease-in-out infinite alternate-reverse;
+        opacity: 0.5;
+    }
+
+    @keyframes morph {
+        0% {
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            transform: scale(1) rotate(0deg);
+        }
+        100% {
+            border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%;
+            transform: scale(1.05) rotate(5deg);
+        }
+    }
+
+    .eco-image-container {
+        position: relative;
+        width: 240px;
+        height: 340px;
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        overflow: hidden;
+        z-index: 2;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .eco-image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Lado Direito - Formulário Django */
+    .eco-right-side {
+        width: 55%;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .eco-form-box {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .eco-input-group {
+        margin-bottom: 16px;
+    }
+
+    .eco-input-group label {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .eco-input-group input {
+        width: 100%;
+        padding: 12px 16px;
+        background: #e9ecef;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #333;
+        outline: none;
+        transition: background 0.3s;
+    }
+
+    .eco-input-group input:focus {
+        background: #dfe3e8;
+        box-shadow: 0 0 0 2px var(--color-light-blue);
+    }
+
+    .eco-btn-submit {
+        width: 100%;
+        padding: 12px;
+        background: var(--color-lime);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.1s;
+        margin-top: 8px;
+        box-shadow: 0 4px 12px rgba(168, 206, 70, 0.4);
+    }
+
+    .eco-btn-submit:hover {
+        background: #97bd3a;
+    }
+
+    .eco-btn-submit:active {
+        transform: scale(0.98);
+    }
+
+    .eco-switch-text {
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        margin-top: 16px;
+    }
+
+    .eco-switch-text a {
+        color: var(--color-dark-blue);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .eco-switch-text a:hover {
+        text-decoration: underline;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .eco-container {
+            flex-direction: column;
+            height: auto;
+        }
+        .eco-left-side {
+            width: 100%;
+            height: 200px;
+        }
+        .eco-right-side {
+            width: 100%;
+            padding: 30px 20px;
+        }
+        .eco-image-container {
+            width: 130px;
+            height: 170px;
+        }
+    }
