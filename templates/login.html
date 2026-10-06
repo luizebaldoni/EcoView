@@ -1,43 +1,80 @@
 {% extends 'base.html' %}
-{% load static %}
+
+{% block title %}Entrar — EcoView{% endblock %}
 
 {% block content %}
-<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
-    <div class="row w-100 justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-lg border-0 rounded-4 p-4 bg-white">
+<div class="w-full max-w-md bg-white p-8 sm:p-10 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all duration-300">
 
-                <!-- Cabeçalho do Card -->
-                <div class="text-center mb-4">
-                    <h3 class="fw-bold text-success">EcoView</h3>
-                    <p class="text-muted small">Sistema de Monitoramento de Ecotecnologias</p>
-                </div>
-
-                <!-- Formulário de Login -->
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label for="username" class="form-label text-secondary fw-semibold small">Usuário</label>
-                        <input type="text" name="username" id="username" class="form-control form-control-lg bg-light border-0" placeholder="Digite seu usuário" required>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="password" class="form-label text-secondary fw-semibold small">Senha</label>
-                        <input type="password" name="password" id="password" class="form-control form-control-lg bg-light border-0" placeholder="••••••••" required>
-                    </div>
-
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">Entrar</button>
-                    </div>
-
-                    <div class="text-center">
-                        <a href="{% url 'register' %}" class="text-decoration-none small text-muted">Não tem cadastro? <span class="text-success fw-semibold">Clique aqui</span></a>
-                    </div>
-                </form>
-
-            </div>
+    <!-- Logo ou Ícone Sutil em SVG -->
+    <div class="flex justify-center mb-6">
+        <div class="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700 shadow-inner">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
         </div>
     </div>
+
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Bem-vindo de volta</h1>
+        <p class="text-sm text-slate-500 mt-1">Insira suas credenciais para acessar o painel</p>
+    </div>
+
+    <!-- Bloco de Mensagens Globais do Django (ex: Erros de autenticação, avisos) -->
+    {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+                <div class="p-3 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-100{% else %}bg-teal-50 text-teal-700 border border-teal-100{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Formulário de Login -->
+    <form method="post" action="{% url 'login' %}" class="space-y-5" novalidate>
+        {% csrf_token %}
+
+        <!-- Exibição de Erros Globais do Formulário -->
+        {% if form.non_field_errors %}
+            <div class="p-3 text-sm rounded-lg bg-red-50 text-red-700 border border-red-100">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Campo Usuário -->
+        <div>
+            <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1.5">Usuário ou E-mail</label>
+            <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
+                   value="{{ form.username.value|default:'' }}" required autofocus
+                   class="w-full px-4 py-2.5 text-slate-800 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 placeholder:text-slate-400"
+                   placeholder="ex: nome.usuario">
+            {% if form.username.errors %}
+                <p class="text-xs text-red-600 mt-1">{{ form.username.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Campo Senha -->
+        <div>
+            <div class="flex justify-between items-center mb-1.5">
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-slate-700">Senha</label>
+                <a href="#" class="text-xs font-medium text-teal-700 hover:text-teal-800 transition-colors">Esqueci minha senha</a>
+            </div>
+            <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" required
+                   class="w-full px-4 py-2.5 text-slate-800 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 placeholder:text-slate-400"
+                   placeholder="••••••••">
+            {% if form.password.errors %}
+                <p class="text-xs text-red-600 mt-1">{{ form.password.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Botão Entrar -->
+        <button type="submit" class="w-full mt-2 py-2.5 px-4 bg-teal-700 hover:bg-teal-800 text-white font-medium rounded-lg text-sm shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+            Entrar
+        </button>
+
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
 </div>
 {% endblock %}
