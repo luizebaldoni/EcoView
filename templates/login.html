@@ -89,7 +89,7 @@
         filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));
     }
 
-    /* Lado Direito - Formulário Django */
+    /* Lado Direito - Mensagem de Manutenção */
     .eco-right-side {
         width: 55%;
         background: #ffffff;
@@ -99,80 +99,26 @@
         padding: 40px;
     }
 
-    .eco-form-box {
+    .eco-maintenance-box {
         width: 100%;
-        max-width: 360px;
+        max-width: 380px;
         display: flex;
         flex-direction: column;
-    }
-
-    .eco-input-group {
-        margin-bottom: 16px;
-    }
-
-    .eco-input-group label {
-        display: block;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 6px;
-        font-weight: 500;
-    }
-
-    .eco-input-group input {
-        width: 100%;
-        padding: 12px 16px;
-        background: #e9ecef;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        color: #333;
-        outline: none;
-        transition: background 0.3s;
-    }
-
-    .eco-input-group input:focus {
-        background: #dfe3e8;
-        box-shadow: 0 0 0 2px var(--color-light-blue);
-    }
-
-    .eco-btn-submit {
-        width: 100%;
-        padding: 12px;
-        background: var(--color-lime);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.3s, transform 0.1s;
-        margin-top: 8px;
-        box-shadow: 0 4px 12px rgba(168, 206, 70, 0.4);
-    }
-
-    .eco-btn-submit:hover {
-        background: #97bd3a;
-    }
-
-    .eco-btn-submit:active {
-        transform: scale(0.98);
-    }
-
-    .eco-switch-text {
+        align-items: center;
         text-align: center;
-        font-size: 13px;
-        color: #666;
-        margin-top: 16px;
     }
 
-    .eco-switch-text a {
-        color: var(--color-dark-blue);
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .eco-switch-text a:hover {
-        text-decoration: underline;
+    .maintenance-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: rgba(2, 174, 238, 0.1);
+        color: var(--color-light-blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        margin-bottom: 20px;
     }
 
     /* Responsividade */
@@ -198,9 +144,8 @@
 
 <div class="eco-login-wrapper">
     <div class="eco-container">
-        <!-- Lado Esquerdo com a Logo e Formas Orgânicas Mais Próximas -->
+        <!-- Lado Esquerdo com a Logo e Formas Orgânicas -->
         <div class="eco-left-side">
-            <!-- Formas reposicionadas mais para o centro, próximas à logo -->
             <div class="eco-shape" style="width: 210px; height: 210px; top: 35px; left: 35px;"></div>
             <div class="eco-shape" style="width: 230px; height: 230px; bottom: 35px; right: 35px;"></div>
 
@@ -209,35 +154,26 @@
             </div>
         </div>
 
-        <!-- Lado Direito com o Formulário do Django -->
+        <!-- Lado Direito com o Aviso de Manutenção -->
         <div class="eco-right-side">
-            <div class="eco-form-box">
-                <!-- Cabeçalho do Card -->
-                <div class="text-center mb-4">
-                    <h3 class="fw-bold" style="color: var(--color-green);">EcoView</h3>
-                    <p class="text-muted small">Sistema de Monitoramento de Ecotecnologias</p>
+            <div class="eco-maintenance-box">
+                <div class="maintenance-icon">
+                    <i class="bi bi-tools"></i>
                 </div>
-
-                <!-- Formulário de Login com tags Django -->
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="eco-input-group">
-                        <label for="username">Usuário</label>
-                        <input type="text" name="username" id="username" placeholder="Digite seu usuário" required>
-                    </div>
-
-                    <div class="eco-input-group">
-                        <label for="password">Senha</label>
-                        <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
-                    </div>
-
-                    <button type="submit" class="eco-btn-submit">Entrar</button>
-
-                    <div class="eco-switch-text">
-                        <a href="{% url 'register' %}">Não tem cadastro? <span style="color: var(--color-green);">Clique aqui</span></a>
-                    </div>
-                </form>
+                <h3 class="fw-bold mb-2" style="color: var(--color-green);">Sistema em Manutenção</h3>
+                <p class="text-muted small mb-4">
+                    Estamos atualizando os servidores e preparando melhorias na infraestrutura do EcoView para
+                    atender você mehor
+                    Retornaremos
+                    em breve!
+                    Visite nosso site institucional: <a href="https://ecotecnologias.org/" target="_blank"
+                                                        class="text-decoration-none" style="color: var
+                                                        (--color-dark-blue); font-weight: 600;">ecotecnologias.org</a>
+                </p>
+                <div class="p-3 bg-light rounded-3 w-100 border-start border-4 border-info text-start">
+                    <span class="d-block fw-semibold text-dark" style="font-size: 12px;">Previsão de Retorno:</span>
+                    <span class="text-muted" style="font-size: 12px;">Em até 5 dias</span>
+                </div>
             </div>
         </div>
     </div>
