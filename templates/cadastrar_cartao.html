@@ -1,74 +1,78 @@
 {% extends "base_after.html" %}
 {% load static %}
 
+{% block title %}EcoView - Controle de Ponto RFID{% endblock %}
+{% block page_title %}Controle de Ponto e Cartões{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-0">
 
     {% if request.user.is_staff or request.user.is_superuser %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-                    <h4 class="fw-bold mb-3" style="color: #03a75a;"><i class="bi bi-person-plus-fill me-2"></i>Cadastrar / Vincular Novo Cartão RFID</h4>
+        <!-- ================= VISÃO DO ADMINISTRADOR ================= -->
 
-                    {% if message %}
-                        <div class="alert alert-success py-2">{{ message }}</div>
-                    {% endif %}
+        <!-- Formulário para Cadastrar/Vincular Cartão -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <h4 class="fw-bold mb-3" style="color: #03a75a;"><i class="bi bi-person-plus-fill me-2"></i>Vincular Novo Cartão RFID</h4>
 
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="uid" class="form-label small text-secondary">UID do Cartão</label>
-                                {{ form.uid }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="nome_pessoa" class="form-label small text-secondary">Nome da Pessoa</label>
-                                {{ form.nome_pessoa }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="email" class="form-label small text-secondary">E-mail</label>
-                                {{ form.email }}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="funcao" class="form-label small text-secondary">Função</label>
-                                {{ form.funcao }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="matricula" class="form-label small text-secondary">Matrícula</label>
-                                {{ form.matricula }}
-                            </div>
-                            <div class="col-md-4 mb-3 d-flex align-items-end">
-                                <button type="submit" class="btn text-white w-100 fw-bold py-2" style="background-color: #03a75a; border-radius: 8px;">
-                                    <i class="bi bi-check-lg me-1"></i> Salvar Cadastro
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+            {% if message %}
+                <div class="alert alert-success py-2">{{ message }}</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="uid" class="form-label small text-secondary">UID do Cartão</label>
+                        {{ form.uid }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="usuario" class="form-label small text-secondary">Dono do Cartão (Usuário)</label>
+                        {{ form.usuario }}
+                    </div>
+                    <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn text-white w-100 fw-bold py-2" style="background-color: #03a75a; border-radius: 8px;">
+                            <i class="bi bi-check-lg me-1"></i> Salvar Vínculo
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
 
-        <!-- Tabela Administrativa Geral de Ponto -->
+        <!-- Tabela Geral de Pontos (Todos os Usuários) -->
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-            <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-list-check me-2"></i>Registro Geral de Ponto (Todos os Usuários)</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0 text-secondary"><i class="bi bi-list-check me-2"></i>Registro Geral de Ponto (Todos os Usuários)</h5>
+                <span class="badge bg-light text-muted">Painel Administrativo</span>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Usuário / Pessoa</th>
-                            <th>Cartão RFID (UID)</th>
-                            <th>Data / Hora da Batida</th>
-                            <th>Status</th>
+                            <th>Usuário</th>
+                            <th>UID do Cartão</th>
+                            <th>Data e Hora da Batida</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Aqui virá o loop de todos os registros para o Admin -->
+                        {% for ponto in registros %}
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">Nenhum registro recente encontrado.</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" style="width: 30px; height: 30px; font-size: 12px; background-color: var(--color-light-blue);">
+                                        {{ ponto.cartao.usuario.username|slice:":1"|upper }}
+                                    </div>
+                                    <span class="fw-semibold text-dark">{{ ponto.cartao.usuario.get_full_name|default:ponto.cartao.usuario.username }}</span>
+                                </div>
+                            </td>
+                            <td><code>{{ ponto.cartao.uid }}</code></td>
+                            <td>{{ ponto.timestamp|date:"d/m/Y H:i:s" }}</td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">Nenhum registro de ponto encontrado.</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -76,15 +80,19 @@
 
     {% else %}
         <!-- ================= VISÃO DO USUÁRIO COMUM (MEU PONTO) ================= -->
+
+        <!-- Cartão de Boas-vindas Pessoal -->
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                         <div>
                             <h4 class="fw-bold mb-1" style="color: #03a75a;"><i class="bi bi-clock-fill me-2"></i>Meu Espelho de Ponto</h4>
-                            <p class="text-muted small mb-0">Acompanhe seus horários de acesso e permanência registrados via RFID.</p>
+                            <p class="text-muted small mb-0">Acompanhe abaixo o histórico das suas batidas de ponto registradas via leitor RFID.</p>
                         </div>
-                        <span class="badge bg-success px-3 py-2" style="font-size: 12px; border-radius: 20px;">Cartão Vinculado Ativo</span>
+                        <span class="badge bg-success px-3 py-2" style="font-size: 12px; border-radius: 20px;">
+                            <i class="bi bi-shield-check me-1"></i> Conta Ativa
+                        </span>
                     </div>
                 </div>
             </div>
@@ -92,26 +100,34 @@
 
         <!-- Tabela Pessoal de Horários -->
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-            <h5 class="fw-bold mb-3 text-secondary" style="font-size: 16px;"><i class="bi bi-calendar-range me-2"></i>Meus Registros Recentes</h5>
+            <h5 class="fw-bold mb-3 text-secondary" style="font-size: 16px;"><i class="bi bi-calendar-range me-2"></i>Meus Registros de Acesso</h5>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Data</th>
-                            <th>Horário de Entrada</th>
-                            <th>Horário de Saída</th>
-                            <th>Tempo de Permanência</th>
+                            <th>Cartão Utilizado (UID)</th>
+                            <th>Data e Hora do Acesso</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Loop exclusivo dos dados do request.user logado -->
+                        {% for ponto in registros %}
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">Você ainda não possui registros de ponto neste período.</td>
+                            <td><code>{{ ponto.cartao.uid }}</code></td>
+                            <td>{{ ponto.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">Registrado com sucesso</span></td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">Você ainda não possui registros de ponto gravados.</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+
     {% endif %}
 
 </div>

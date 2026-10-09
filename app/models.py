@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class SensorReading(models.Model):
 	timestamp = models.DateTimeField(default = timezone.now)
@@ -32,25 +33,19 @@ class SensorReading(models.Model):
 
 # --- RFID Card Model ---
 class CartaoRFID(models.Model):
-	uid = models.CharField(max_length=32, unique=True)
-	nome = models.CharField(max_length=100, blank=True)
-	nome_pessoa = models.CharField(max_length=100)
-	email = models.EmailField()
-	funcao = models.CharField(max_length=100)
-	matricula = models.CharField(max_length=50)
+    uid = models.CharField(max_length=50, unique=True, verbose_name="UID do Cartão")
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Dono do Cartão", null=True, blank=True)
+    cadastrado_em = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
-	def __str__(self):
-		return f"{self.nome_pessoa} - {self.uid}" if self.nome_pessoa else self.uid
+    def __str__(self):
+        return f"{self.usuario.username if self.usuario else 'Sem dono'} - {self.uid}"
 
-class AccessLog(models.Model):
-	uid = models.CharField(max_length=32)
-	cartao = models.ForeignKey(CartaoRFID, null=True, blank=True, on_delete=models.SET_NULL)
-	autorizado = models.BooleanField()
-	timestamp = models.DateTimeField(auto_now_add=True)
+class RegistroPonto(models.Model):
+    cartao = models.ForeignKey(CartaoRFID, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora da Batida")
 
-	def __str__(self):
-		status = "Autorizado" if self.autorizado else "Negado"
-		return f"{self.uid} - {status} em {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+    def __str__(self):
+        return f"{self.cartao.usuario.username} em {self.timestamp}"
 
 class BriseSensorReading(models.Model):
 	"""Sensor readings for Brise Vegetal monitoring (6 DS18B20, 2 DHT11 (temp+hum), 2 UV, 2 anemometers)"""

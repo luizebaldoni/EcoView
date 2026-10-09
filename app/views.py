@@ -276,6 +276,57 @@ def dashboard(request):
         return render(request, 'error.html', {'error': str(e)})
 
 
+# Formulário para o Admin cadastrar o cartão e associar ao usuário
+class CartaoRFIDForm(forms.ModelForm):
+    class Meta:
+        model = CartaoRFID
+        fields = ['uid', 'usuario']
+        widgets = {
+            'uid': forms.TextInput(attrs={'class': 'form-control bg-light border-0', 'placeholder': 'Ex: A1 B2 C3 D4'}),
+            'usuario': forms.Select(attrs={'class': 'form-select bg-light border-0'}),
+        }
+
+
+@login_required
+def ponto_view(request):
+    message = None
+
+    if request.user.is_staff and request.method == 'POST':
+        form = CartaoRFIDForm(request.POST)
+        if form.is_valid():
+            form.save()
+            message = "Cartão vinculado com sucesso!"
+            return redirect('cadastrar_cartao')
+    else:
+        form = CartaoRFIDForm()
+
+    if request.user.is_staff or request.user.is_superuser:
+        registros = RegistroPonto.objects.all().order_by('-timestamp')
+    else:
+        cartoes_usuario = CartaoRFID.objects.filter(usuario=request.user)
+        registros = RegistroPonto.objects.filter(cartao__in=cartoes_usuario).order_by('-timestamp')
+
+    context = {
+        'form': form,
+        'registros': registros,
+        'message': message,
+    }
+    return render(request, 'cadastrar_cartao.html', context)
+
+
+@csrf_exempt
+def registrar_ponto_rfid(request):
+    """API endpoint que o ESP8266 vai chamar ao aproximar o cartão"""
+    if request.method == 'POST':
+        uid = request.body.decode('utf-8').strip().upper()
+        try:
+            cartao = CartaoRFID.objects.get(uid=uid)
+            RegistroPonto.objects.create(cartao=cartao)
+            return JsonResponse({"status": "success", "message": "Ponto registrado com sucesso"}, status=200)
+        except CartaoRFID.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Cartão não cadastrado"}, status=404)
+    return JsonResponse({"status": "error", "message": "Método inválido"}, status=405)
+
 # Protected selection pages (replace lambdas in urls)
 @login_required(login_url='login')
 def select_dashboard(request):
@@ -330,24 +381,6 @@ def access_log_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'access_log_list.html', {'page_obj': page_obj})
-
-
-class CartaoRFIDForm(forms.ModelForm):
-    class Meta:
-        model = CartaoRFID
-        fields = ['uid', 'nome', 'nome_pessoa', 'email', 'funcao', 'matricula']
-        labels = {'uid': 'UID do Cartão', 'nome': 'Nome do Cartão (opcional)', 'nome_pessoa': 'Nome da Pessoa', 'email': 'E-mail', 'funcao': 'Função', 'matricula': 'Matrícula'}
-
-
-@login_required(login_url='login')
-def cadastrar_cartao(request):
-    form = CartaoRFIDForm(request.POST or None)
-    message = None
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        message = 'Cartão cadastrado com sucesso!'
-        form = CartaoRFIDForm()
-    return render(request, 'cadastrar_cartao.html', {'form': form, 'message': message})
 
 
 #====== LOGIN FORM ======#

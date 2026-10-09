@@ -16,6 +16,7 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('api/verifica_cartao/', views.verifica_cartao, name='verifica_cartao'),
+    path('api/ponto/', views.registrar_ponto_rfid, name='registrar_ponto_rfid'), # Rota do ESP8266
     path('acessos/', views.access_log_list, name='access_log_list'),
-    path('cartoes/cadastrar/', views.cadastrar_cartao, name='cadastrar_cartao'),
+    path('cartoes/cadastrar/', views.ponto_view, name='cadastrar_cartao'),     # Alterado de cadastrar_cartao para ponto_view
 ]
