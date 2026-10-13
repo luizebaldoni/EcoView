@@ -51,6 +51,54 @@ O sistema permite cadastrar cartões RFID e controlar o acesso físico via ESP82
 - O backend responde se o cartão está autorizado (`{"autorizado": true}` ou `false`).
 - A ESP8266 pode então liberar ou negar o acesso conforme a resposta.
 
+### Registro de ponto por RFID
+
+Além do controle de acesso, o projeto agora registra ponto automaticamente quando o ESP8266 envia o UID para:
+
+```text
+POST /api/ponto/
+```
+
+O backend grava:
+- Nome do aluno
+- UID do cartão
+- Data e hora exatas
+- Tipo de batida alternando entre **ENTRADA** e **SAÍDA**
+
+O firmware pronto está em:
+
+```text
+hardwares/esp8266_rfid_ponto.ino
+```
+
+### Como gravar os alunos e associar os UID
+
+Execute o script abaixo para criar/atualizar os usuários IC e vincular os cartões:
+
+```bash
+python scripts/seed_ic_cards.py
+```
+
+Para simular sem salvar nada:
+
+```bash
+python scripts/seed_ic_cards.py --dry-run
+```
+
+UID cadastrados no script:
+
+| UID | Nome |
+|---|---|
+| `0417796A2F6481` | Luize Baldoni |
+| `047D4B6A2F6480` | Gabrielle Barcellos |
+| `0485EB622F6480` | Lyncoln Jurich |
+| `04C6676A2F6480` | Eduarda Schossler |
+| `0472EA622F6480` | Amanda Belitz |
+
+### Exemplo de integração no ESP8266
+
+O firmware envia o UID via `POST` em `text/plain` para o endpoint do Django. O servidor responde com JSON indicando se o ponto foi registrado com sucesso.
+
 Exemplo de requisição ESP8266:
 ```cpp
 HTTPClient http;

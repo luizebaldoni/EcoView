@@ -1,8 +1,12 @@
+import calendar
+import csv
 import json
-import traceback
-from datetime import timedelta
 import logging
 import sys
+import traceback
+from collections import defaultdict
+from datetime import datetime, timedelta
+from functools import wraps
 
 from django import forms
 from django.contrib.auth import authenticate, login, logout
@@ -13,10 +17,12 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db.models import Avg, Max, Min
+from django.db import transaction
 from django.db.utils import ConnectionDoesNotExist
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
@@ -24,6 +30,126 @@ from django.views.decorators.csrf import csrf_exempt
 from config import settings
 from django.conf import settings as django_settings
 from .models import *
+
+
+IC_GROUPS = {'ic'}
+ADMIN_GROUPS = {'adm', 'mestrado', 'doutorado', 'professor'}
+AUTHORIZED_GROUPS = IC_GROUPS | ADMIN_GROUPS
+
+
+def _user_group_names(user):
+  if not user.is_authenticated:
+    return set()
+  return set(user.groups.values_list('name', flat=True))
+
+
+def _profile_role(user):
+  perfil = getattr(user, 'perfil', None)
+  if perfil:
+    return perfil.role
+  return None
+
+
+def user_is_ic(user):
+  if not user.is_authenticated:
+    return False
+  if user.is_staff or user.is_superuser:
+    return False
+  return _profile_role(user) == PerfilUsuario.ROLE_IC or bool(_user_group_names(user) & IC_GROUPS)
+
+
+def user_is_admin_like(user):
+  if not user.is_authenticated:
+    return False
+  if user.is_staff or user.is_superuser:
+    return True
+  return _profile_role(user) in {PerfilUsuario.ROLE_ADMIN, PerfilUsuario.ROLE_SUPERVISOR} or bool(_user_group_names(user) & ADMIN_GROUPS)
+
+
+def _permission_denied(request, message='Você não tem permissão para acessar esta área.'):
+  return render(request, 'error.html', {'error': message, 'status_code': 403}, status=403)
+
+
+def _format_seconds(total_seconds):
+  total_seconds = int(total_seconds or 0)
+  hours, remainder = divmod(total_seconds, 3600)
+  minutes = remainder // 60
+  return f'{hours:02d}:{minutes:02d}'
+
+
+def _build_point_filters(request, queryset, allow_admin_filters=False):
+  data_exata = parse_date(request.GET.get('data') or '')
+  inicio = parse_date(request.GET.get('inicio') or '')
+  fim = parse_date(request.GET.get('fim') or '')
+  periodo = (request.GET.get('periodo') or '').lower()
+  aluno_id = request.GET.get('aluno') if allow_admin_filters else None
+
+  if data_exata:
+    queryset = queryset.filter(data_ponto=data_exata)
+
+  if inicio and fim:
+    queryset = queryset.filter(data_ponto__range=(inicio, fim))
+  elif periodo in {'semana', 'semanal'}:
+    base = data_exata or timezone.localdate()
+    inicio_semana = base - timedelta(days=base.weekday())
+    fim_semana = inicio_semana + timedelta(days=6)
+    queryset = queryset.filter(data_ponto__range=(inicio_semana, fim_semana))
+  elif periodo in {'mes', 'mensal'}:
+    base = data_exata or timezone.localdate()
+    inicio_mes = base.replace(day=1)
+    ultimo_dia = calendar.monthrange(base.year, base.month)[1]
+    fim_mes = base.replace(day=ultimo_dia)
+    queryset = queryset.filter(data_ponto__range=(inicio_mes, fim_mes))
+
+  if aluno_id:
+    queryset = queryset.filter(usuario_id=aluno_id)
+
+  return queryset
+
+
+def _calculate_worked_seconds(records):
+  entrada_aberta = None
+  total_seconds = 0
+  for registro in sorted(records, key=lambda item: item.timestamp):
+    if registro.tipo_movimento == RegistroPonto.ENTRADA:
+      entrada_aberta = registro
+    elif registro.tipo_movimento == RegistroPonto.SAIDA and entrada_aberta:
+      total_seconds += max(0, int((registro.timestamp - entrada_aberta.timestamp).total_seconds()))
+      entrada_aberta = None
+  return total_seconds
+
+
+def _aggregate_totals_by_user(records):
+  groups = defaultdict(list)
+  for registro in records:
+    groups[registro.usuario_id].append(registro)
+
+  result = []
+  for usuario_id, itens in groups.items():
+    usuario = itens[0].usuario or (itens[0].cartao.usuario if itens[0].cartao_id else None)
+    total_seconds = _calculate_worked_seconds(itens)
+    result.append({
+      'usuario': usuario,
+      'usuario_id': usuario_id,
+      'nome': itens[0].nome_aluno if itens else (usuario.get_full_name() or usuario.username if usuario else 'Sem nome'),
+      'total_seconds': total_seconds,
+      'total_hhmm': _format_seconds(total_seconds),
+      'total_decimal': round(total_seconds / 3600, 2),
+    })
+
+  result.sort(key=lambda item: (item['nome'] or '').lower())
+  return result
+
+
+def _point_queryset_for_user(request):
+  queryset = RegistroPonto.objects.select_related('cartao', 'usuario', 'cartao__usuario').all()
+  if user_is_admin_like(request.user):
+    return queryset
+  return queryset.filter(usuario=request.user)
+
+
+def _admin_users_queryset():
+  return User.objects.filter(groups__name='ic').distinct().order_by('first_name', 'username')
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
@@ -222,6 +348,93 @@ def latest_sensor_data(request):
 
 
 @login_required(login_url='login')
+def ponto_dashboard(request):
+  if not (user_is_ic(request.user) or user_is_admin_like(request.user)):
+    return _permission_denied(request)
+
+  queryset = _build_point_filters(request, _point_queryset_for_user(request), allow_admin_filters=user_is_admin_like(request.user)).order_by('-timestamp')
+  paginator = Paginator(queryset, 25)
+  page_obj = paginator.get_page(request.GET.get('page'))
+  registros = list(queryset.order_by('usuario__first_name', 'usuario__username', 'timestamp'))
+  totais_por_usuario = _aggregate_totals_by_user(registros)
+  registro_mais_recente = queryset.first()
+
+  hoje = timezone.localdate()
+  inicio_semana = hoje - timedelta(days=hoje.weekday())
+  fim_semana = inicio_semana + timedelta(days=6)
+  weekly_queryset = _point_queryset_for_user(request).filter(data_ponto__range=(inicio_semana, fim_semana))
+  weekly_seconds = _calculate_worked_seconds(list(weekly_queryset.order_by('timestamp')))
+
+  context = {
+    'page_obj': page_obj,
+    'totais_por_usuario': totais_por_usuario,
+    'registro_mais_recente': registro_mais_recente,
+    'weekly_total_hhmm': _format_seconds(weekly_seconds),
+    'weekly_total_decimal': round(weekly_seconds / 3600, 2),
+    'is_admin_like': user_is_admin_like(request.user),
+    'is_ic_user': user_is_ic(request.user),
+    'usuarios_ic': _admin_users_queryset() if user_is_admin_like(request.user) else [],
+    'filtros': {
+      'aluno': request.GET.get('aluno', ''),
+      'data': request.GET.get('data', ''),
+      'inicio': request.GET.get('inicio', ''),
+      'fim': request.GET.get('fim', ''),
+      'periodo': request.GET.get('periodo', ''),
+    },
+  }
+  return render(request, 'ponto_dashboard.html', context)
+
+
+@login_required(login_url='login')
+def exportar_relatorio_ponto(request):
+  if not user_is_admin_like(request.user):
+    return _permission_denied(request)
+
+  queryset = _build_point_filters(request, _point_queryset_for_user(request), allow_admin_filters=True).order_by('usuario__first_name', 'usuario__username', 'timestamp')
+  response = HttpResponse(content_type='text/csv')
+  response['Content-Disposition'] = 'attachment; filename="relatorio_ponto.csv"'
+  writer = csv.writer(response, delimiter=';')
+  writer.writerow(['Nome do Aluno', 'UID da Tag', 'Tipo', 'Data', 'Hora', 'Timestamp', 'Observação'])
+  for registro in queryset:
+    writer.writerow([
+      registro.nome_aluno,
+      registro.uid_tag,
+      registro.tipo_movimento,
+      registro.data_ponto.strftime('%d/%m/%Y') if registro.data_ponto else '',
+      registro.hora_ponto.strftime('%H:%M:%S') if registro.hora_ponto else '',
+      registro.timestamp.strftime('%d/%m/%Y %H:%M:%S') if registro.timestamp else '',
+      registro.observacao,
+    ])
+  return response
+
+
+@login_required(login_url='login')
+def editar_registro_ponto(request, pk):
+  if not user_is_admin_like(request.user):
+    return _permission_denied(request)
+
+  registro = get_object_or_404(RegistroPonto, pk=pk)
+
+  if request.method == 'POST':
+    data_ponto = parse_date(request.POST.get('data_ponto') or '') or registro.data_ponto
+    try:
+      hora_ponto = datetime.strptime(request.POST.get('hora_ponto'), '%H:%M').time()
+    except (TypeError, ValueError):
+      hora_ponto = registro.hora_ponto
+    tipo_movimento = request.POST.get('tipo_movimento') or registro.tipo_movimento
+    registro.data_ponto = data_ponto
+    registro.hora_ponto = hora_ponto
+    if tipo_movimento in {RegistroPonto.ENTRADA, RegistroPonto.SAIDA}:
+      registro.tipo_movimento = tipo_movimento
+    registro.observacao = request.POST.get('observacao', registro.observacao)
+    registro.timestamp = timezone.make_aware(datetime.combine(data_ponto, hora_ponto), timezone.get_current_timezone())
+    registro.save()
+    return redirect('ponto_dashboard')
+
+  return render(request, 'editar_ponto.html', {'registro': registro})
+
+
+@login_required(login_url='login')
 def dashboard(request):
     """
     Dashboard view showing charts and summary of last 24 hours
@@ -291,7 +504,7 @@ class CartaoRFIDForm(forms.ModelForm):
 def ponto_view(request):
     message = None
 
-    if request.user.is_staff and request.method == 'POST':
+    if user_is_admin_like(request.user) and request.method == 'POST':
         form = CartaoRFIDForm(request.POST)
         if form.is_valid():
             form.save()
@@ -300,11 +513,10 @@ def ponto_view(request):
     else:
         form = CartaoRFIDForm()
 
-    if request.user.is_staff or request.user.is_superuser:
-        registros = RegistroPonto.objects.all().order_by('-timestamp')
+    if user_is_admin_like(request.user):
+        registros = RegistroPonto.objects.select_related('cartao', 'usuario').all().order_by('-timestamp')
     else:
-        cartoes_usuario = CartaoRFID.objects.filter(usuario=request.user)
-        registros = RegistroPonto.objects.filter(cartao__in=cartoes_usuario).order_by('-timestamp')
+        registros = RegistroPonto.objects.select_related('cartao', 'usuario').filter(usuario=request.user).order_by('-timestamp')
 
     context = {
         'form': form,
@@ -318,13 +530,53 @@ def ponto_view(request):
 def registrar_ponto_rfid(request):
     """API endpoint que o ESP8266 vai chamar ao aproximar o cartão"""
     if request.method == 'POST':
-        uid = request.body.decode('utf-8').strip().upper()
+        raw_body = request.body.decode('utf-8').strip()
         try:
-            cartao = CartaoRFID.objects.get(uid=uid)
-            RegistroPonto.objects.create(cartao=cartao)
-            return JsonResponse({"status": "success", "message": "Ponto registrado com sucesso"}, status=200)
+            payload = json.loads(raw_body) if raw_body.startswith('{') else {}
+        except json.JSONDecodeError:
+            payload = {}
+
+        uid = (payload.get('uid') or payload.get('card_uid') or raw_body).strip().upper()
+        if not uid:
+            return JsonResponse({"status": "error", "message": "UID do cartão não informado"}, status=400)
+
+        try:
+            cartao = CartaoRFID.objects.select_related('usuario').get(uid=uid)
         except CartaoRFID.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Cartão não cadastrado"}, status=404)
+
+        now = timezone.localtime(timezone.now())
+
+        with transaction.atomic():
+            ultimo_registro = (
+                RegistroPonto.objects.select_for_update()
+                .filter(cartao=cartao, data_ponto=now.date())
+                .order_by('-timestamp')
+                .first()
+            )
+            tipo_movimento = RegistroPonto.ENTRADA if not ultimo_registro or ultimo_registro.tipo_movimento == RegistroPonto.SAIDA else RegistroPonto.SAIDA
+
+            registro = RegistroPonto.objects.create(
+                cartao=cartao,
+                usuario=cartao.usuario,
+                nome_aluno=(cartao.usuario.get_full_name() if cartao.usuario else '') or (cartao.usuario.username if cartao.usuario else 'Aluno sem cadastro'),
+                uid_tag=cartao.uid,
+                tipo_movimento=tipo_movimento,
+                timestamp=now,
+                data_ponto=now.date(),
+                hora_ponto=now.time().replace(microsecond=0),
+            )
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Ponto registrado com sucesso",
+            "tipo_movimento": registro.tipo_movimento,
+            "nome_aluno": registro.nome_aluno,
+            "uid": registro.uid_tag,
+            "data": registro.data_ponto.isoformat(),
+            "hora": registro.hora_ponto.strftime('%H:%M:%S'),
+            "timestamp": registro.timestamp.isoformat(),
+        }, status=200)
     return JsonResponse({"status": "error", "message": "Método inválido"}, status=405)
 
 # Protected selection pages (replace lambdas in urls)
@@ -452,8 +704,8 @@ class RegisterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Preenche os grupos disponíveis para seleção
-        self.fields['group'].choices = [(g.id, g.name) for g in Group.objects.all()]
+        # CORREÇÃO: Usa g.name como valor (value) em vez de g.id para bater com a validação do login
+        self.fields['group'].choices = [(g.name, g.name) for g in Group.objects.all()]
 
 
 def register_view(request):
@@ -488,5 +740,13 @@ def register_view(request):
                 # Adiciona ao grupo
                 group, created = Group.objects.get_or_create(name=group_name)
                 user.groups.add(group)
+                role_map = {
+                    'ic': PerfilUsuario.ROLE_IC,
+                    'adm': PerfilUsuario.ROLE_ADMIN,
+                    'mestrado': PerfilUsuario.ROLE_SUPERVISOR,
+                    'doutorado': PerfilUsuario.ROLE_SUPERVISOR,
+                    'professor': PerfilUsuario.ROLE_SUPERVISOR,
+                }
+                PerfilUsuario.objects.get_or_create(user=user, defaults={'role': role_map.get(group_name, PerfilUsuario.ROLE_IC)})
                 message = 'Cadastro realizado! Aguarde o administrador liberar seu acesso.'
     return render(request, 'register.html', {'form': form, 'message': message})

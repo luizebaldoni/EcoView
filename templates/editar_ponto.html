@@ -1,0 +1,54 @@
+{% extends "base_after.html" %}
+
+{% block title %}EcoView - Editar Ponto{% endblock %}
+{% block page_title %}Editar Batida de Ponto{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+                <h4 class="fw-bold mb-1" style="color: #03a75a;">{{ registro.nome_aluno }}</h4>
+                <p class="text-muted small mb-0">Edite manualmente a data, hora, tipo e observação da batida.</p>
+            </div>
+            <a href="{% url 'ponto_dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+        </div>
+
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-4">
+                <label class="form-label small text-secondary">Aluno</label>
+                <input type="text" class="form-control" value="{{ registro.nome_aluno }}" disabled>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-secondary">UID</label>
+                <input type="text" class="form-control" value="{{ registro.uid_tag }}" disabled>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-secondary">Tipo</label>
+                <select name="tipo_movimento" class="form-select">
+                    <option value="ENTRADA" {% if registro.tipo_movimento == 'ENTRADA' %}selected{% endif %}>Entrada</option>
+                    <option value="SAIDA" {% if registro.tipo_movimento == 'SAIDA' %}selected{% endif %}>Saída</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-secondary">Data</label>
+                <input type="date" name="data_ponto" class="form-control" value="{{ registro.data_ponto|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-secondary">Hora</label>
+                <input type="time" name="hora_ponto" class="form-control" value="{{ registro.hora_ponto|time:'H:i' }}">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label small text-secondary">Observação</label>
+                <textarea name="observacao" class="form-control" rows="4">{{ registro.observacao }}</textarea>
+            </div>
+            <div class="col-12 d-flex gap-2 justify-content-end">
+                <a href="{% url 'ponto_dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

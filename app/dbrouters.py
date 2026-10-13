@@ -1,3 +1,6 @@
+from django.conf import settings
+
+
 class MonitoringRouter:
     """DB router to send monitoring app models to specific databases.
 
@@ -9,9 +12,9 @@ class MonitoringRouter:
     def db_for_read(self, model, **hints):
         name = model.__name__
         if name == 'BriseSensorReading':
-            return 'brise'
+            return 'brise' if 'brise' in settings.DATABASES else 'default'
         if name == 'PavimentosSensorReading':
-            return 'pavimentos'
+            return 'pavimentos' if 'pavimentos' in settings.DATABASES else 'default'
         return 'default'
 
     def db_for_write(self, model, **hints):
@@ -28,9 +31,9 @@ class MonitoringRouter:
         # Ensure sensor models are migrated to their databases
         if app_label == 'app':
             if model_name == 'brisesensorreading':
-                return db == 'brise'
+                return db == ('brise' if 'brise' in settings.DATABASES else 'default')
             if model_name == 'pavimentossensorreading':
-                return db == 'pavimentos'
+                return db == ('pavimentos' if 'pavimentos' in settings.DATABASES else 'default')
             # everything else in app -> default
             return db == 'default'
         # other apps follow default

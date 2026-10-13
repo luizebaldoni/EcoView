@@ -60,13 +60,13 @@
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" style="width: 30px; height: 30px; font-size: 12px; background-color: var(--color-light-blue);">
-                                        {{ ponto.cartao.usuario.username|slice:":1"|upper }}
+                                        {{ ponto.nome_aluno|slice:":1"|upper }}
                                     </div>
-                                    <span class="fw-semibold text-dark">{{ ponto.cartao.usuario.get_full_name|default:ponto.cartao.usuario.username }}</span>
+                                    <span class="fw-semibold text-dark">{{ ponto.nome_aluno }}</span>
                                 </div>
                             </td>
-                            <td><code>{{ ponto.cartao.uid }}</code></td>
-                            <td>{{ ponto.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td><code>{{ ponto.uid_tag }}</code></td>
+                            <td>{{ ponto.data_ponto|date:"d/m/Y" }} {{ ponto.hora_ponto|time:"H:i:s" }}</td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -114,8 +114,8 @@
                     <tbody>
                         {% for ponto in registros %}
                         <tr>
-                            <td><code>{{ ponto.cartao.uid }}</code></td>
-                            <td>{{ ponto.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td><code>{{ ponto.uid_tag }}</code></td>
+                            <td>{{ ponto.data_ponto|date:"d/m/Y" }} {{ ponto.hora_ponto|time:"H:i:s" }}</td>
                             <td><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">Registrado com sucesso</span></td>
                         </tr>
                         {% empty %}

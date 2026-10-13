@@ -163,6 +163,11 @@
                     </a>
                 </li>
                 <li class="eco-nav-item">
+                    <a href="{% url 'ponto_dashboard' %}" class="eco-nav-link {% if request.resolver_match.url_name == 'ponto_dashboard' or request.resolver_match.url_name == 'editar_registro_ponto' %}active{% endif %}">
+                        <i class="bi bi-clock-history fs-5"></i> Pontos
+                    </a>
+                </li>
+                <li class="eco-nav-item">
                     <a href="{% url 'data_table' %}" class="eco-nav-link {% if request.resolver_match.url_name == 'data_table' %}active{% endif %}">
                         <i class="bi bi-table fs-5"></i> Tabelas de Dados
                     </a>
