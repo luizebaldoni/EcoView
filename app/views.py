@@ -548,13 +548,18 @@ def registrar_ponto_rfid(request):
         except json.JSONDecodeError:
             payload = {}
 
-        uid = (payload.get('uid') or payload.get('card_uid') or raw_body).strip().upper()
+        raw_uid = payload.get('uid') or payload.get('card_uid') or raw_body
+        uid = normalize_rfid_uid(raw_uid)
         if not uid:
             return JsonResponse({"status": "error", "message": "UID do cartão não informado"}, status=400)
 
-        try:
-            cartao = CartaoRFID.objects.select_related('usuario').get(uid=uid)
-        except CartaoRFID.DoesNotExist:
+        cartao = CartaoRFID.objects.select_related('usuario').filter(uid=uid).first()
+        if cartao is None:
+            for item in CartaoRFID.objects.select_related('usuario').all():
+                if normalize_rfid_uid(item.uid) == uid:
+                    cartao = item
+                    break
+        if cartao is None:
             return JsonResponse({"status": "error", "message": "Cartão não cadastrado"}, status=404)
 
         now = timezone.localtime(timezone.now())

@@ -1,7 +1,8 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
 
 // ======================
 // CONFIGURAÇÕES DE REDE
@@ -9,19 +10,27 @@
 const char* WIFI_SSID = "SUA_REDE_WIFI";
 const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";
 
-// Troque pelo IP/host do seu servidor Django
-// Ex.: http://192.168.0.10:8000/api/ponto/
-const char* PONTO_API_URL = "http://192.168.0.10:8000/api/ponto/";
+// Endpoint do Django (EcoView)
+// IMPORTANTE: ajuste o protocolo conforme seu proxy.
+// Se o nginx estiver em TLS, use https://... (como abaixo).
+// Se estiver sem SSL, troque para http://... e use WiFiClient normal.
+const char* ECOVIEW_API_URL = "https://10.5.1.100/api/ponto/";
+
+// Opcional: Google Script (deixe "" se não quiser enviar para a planilha)
+const char* GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb43LXybJYLuo2Fw8ZmjzBh0GhgHLwwZ2T9sCTTLs1Z_wF30op_9UMEMwB_7fklK5B/exec";
 
 // ======================
-// PINAGEM RFID (MFRC522)
+// PINAGEM RFID + BUZZER
 // ======================
-// ESP8266 NodeMCU/Wemos D1 mini (ajuste se necessário)
-#define SS_PIN  D8
-#define RST_PIN D0
+// ESP8266 NodeMCU/Wemos D1 mini
+// D1 = GPIO5 | D2 = GPIO4 | D8 = GPIO15
+#define BUZZER_PIN 5   // D1
+#define SS_PIN 15      // D8
+#define RST_PIN 4      // D2
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 WiFiClient wifiClient;
+WiFiClientSecure secureClient;
 
 // Evita múltiplas leituras seguidas do mesmo cartão
 unsigned long lastReadAt = 0;
@@ -37,6 +46,13 @@ String uidToHex(const byte *buffer, byte bufferSize) {
   return uid;
 }
 
+void emitirBip() {
+  // Lógica invertida: LOW = liga, HIGH = desliga
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(100);
+  digitalWrite(BUZZER_PIN, HIGH);
+}
+
 bool enviarUIDParaServidor(const String& uid) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[ERRO] Wi-Fi desconectado.");
@@ -44,8 +60,10 @@ bool enviarUIDParaServidor(const String& uid) {
   }
 
   HTTPClient http;
-  if (!http.begin(wifiClient, PONTO_API_URL)) {
-    Serial.println("[ERRO] Falha ao iniciar HTTPClient.");
+  secureClient.setInsecure();
+
+  if (!http.begin(secureClient, ECOVIEW_API_URL)) {
+    Serial.println("[ERRO] Falha ao iniciar HTTPS client para o servidor Django.");
     return false;
   }
 
@@ -55,6 +73,42 @@ bool enviarUIDParaServidor(const String& uid) {
 
   Serial.printf("[HTTP] Código: %d\n", httpCode);
   Serial.printf("[HTTP] Resposta: %s\n", response.c_str());
+
+  if (httpCode == -1) {
+    Serial.println("[DICA] Verifique se a URL está em HTTPS e se o nginx está ouvindo na porta correta.");
+  }
+
+  http.end();
+  return httpCode > 0 && httpCode < 400;
+}
+
+bool enviarUIDParaGoogleScript(const String& uid) {
+  if (String(GOOGLE_SCRIPT_URL).length() == 0) {
+    return true;
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[ERRO] Wi-Fi desconectado.");
+    return false;
+  }
+
+  WiFiClientSecure secureClient;
+  secureClient.setInsecure();
+
+  HTTPClient http;
+  String fullUrl = String(GOOGLE_SCRIPT_URL) + "?uid=" + uid;
+
+  if (!http.begin(secureClient, fullUrl)) {
+    Serial.println("[ERRO] Falha ao iniciar HTTPS com Google Script.");
+    return false;
+  }
+
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  int httpCode = http.GET();
+  String response = http.getString();
+
+  Serial.printf("[GOOGLE] Código: %d\n", httpCode);
+  Serial.printf("[GOOGLE] Resposta: %s\n", response.c_str());
 
   http.end();
   return httpCode > 0 && httpCode < 400;
@@ -77,6 +131,9 @@ void conectarWiFi() {
 void setup() {
   Serial.begin(115200);
   delay(300);
+
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, HIGH); // silêncio no boot
 
   SPI.begin();
   mfrc522.PCD_Init();
@@ -110,12 +167,25 @@ void loop() {
   Serial.print("UID lido: ");
   Serial.println(uid);
 
-  bool ok = enviarUIDParaServidor(uid);
-  if (ok) {
-    Serial.println("[OK] Ponto enviado com sucesso.");
-    lastReadAt = now;
+  emitirBip();
+
+  bool okServidor = enviarUIDParaServidor(uid);
+  bool okGoogle = enviarUIDParaGoogleScript(uid);
+
+  if (okServidor) {
+    Serial.println("[OK] Ponto enviado ao servidor com sucesso.");
   } else {
-    Serial.println("[ERRO] Falha ao enviar ponto.");
+    Serial.println("[ERRO] Falha ao enviar ponto ao servidor.");
+  }
+
+  if (okGoogle) {
+    Serial.println("[OK] UID enviado ao Google Script.");
+  } else {
+    Serial.println("[ERRO] Falha ao enviar UID ao Google Script.");
+  }
+
+  if (okServidor || okGoogle) {
+    lastReadAt = now;
   }
 
   // Finaliza a comunicação com o cartão

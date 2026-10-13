@@ -118,7 +118,21 @@ O script:
 
 ### Exemplo de integração no ESP8266
 
-O firmware envia o UID via `POST` em `text/plain` para o endpoint do Django. O servidor responde com JSON indicando se o ponto foi registrado com sucesso.
+O firmware em `hardwares/esp8266_rfid_ponto.ino`:
+- lê o UID com o MFRC522
+- emite bip com lógica invertida no buzzer
+- envia o UID via `POST` em `text/plain` para o endpoint do Django
+- opcionalmente também chama o Google Script via HTTPS
+
+Se quiser desativar o envio para a planilha, deixe `GOOGLE_SCRIPT_URL` como string vazia (`""`).
+
+Se o ESP8266 retornar `Código: -1` no envio ao Django, normalmente é porque a URL do backend está errada ou o servidor não está acessível na rede local.
+Garanta que:
+- `ECOVIEW_API_URL` aponte para o IP real do servidor Django e use o protocolo correto:
+  - `https://...` se o nginx estiver com TLS/SSL
+  - `http://...` se estiver sem SSL
+- o Django/Gunicorn esteja escutando na rede (`0.0.0.0` ou via nginx)
+- o IP do servidor esteja liberado em `ALLOWED_HOSTS` quando `DEBUG = False`
 
 Exemplo de requisição ESP8266:
 ```cpp
