@@ -23,6 +23,10 @@ Server deployment checklist for EcoView
    python manage.py migrate --database=brise
    python manage.py migrate --database=pavimentos
 
+5.1) Sync users/groups and seed RFID cards
+   python scripts/sync_authorized_users.py
+   python scripts/seed_ic_cards.py
+
 6) Collect static
    python manage.py collectstatic --noinput
 
@@ -40,6 +44,10 @@ Server deployment checklist for EcoView
 9) Check logs and test endpoint
    tail -f /var/www/ecoview/logs/django.log
    curl -X GET http://127.0.0.1:8000/api/latest/
+
+Tip:
+- If login on the server says the user is not in an authorized group, re-run `python scripts/sync_authorized_users.py`.
+- If RFID cards/users are missing, run `python scripts/seed_ic_cards.py` to create the UID bindings.
 
 Notes:
  - This is a minimal guide. Adjust user/paths/ports for your setup. Secure secrets using a secrets manager if possible.

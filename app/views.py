@@ -66,6 +66,18 @@ def user_is_admin_like(user):
   return _profile_role(user) in {PerfilUsuario.ROLE_ADMIN, PerfilUsuario.ROLE_SUPERVISOR} or bool(_user_group_names(user) & ADMIN_GROUPS)
 
 
+def user_is_authorized_for_login(user):
+  if not user.is_authenticated:
+    return False
+  if not user.is_active:
+    return False
+  if user.is_staff or user.is_superuser:
+    return True
+  if _profile_role(user) in {PerfilUsuario.ROLE_IC, PerfilUsuario.ROLE_ADMIN, PerfilUsuario.ROLE_SUPERVISOR}:
+    return True
+  return bool(_user_group_names(user) & AUTHORIZED_GROUPS)
+
+
 def _permission_denied(request, message='Você não tem permissão para acessar esta área.'):
   return render(request, 'error.html', {'error': message, 'status_code': 403}, status=403)
 
@@ -645,19 +657,16 @@ class LoginForm(forms.Form):
 def login_view(request):
     form = LoginForm(request.POST or None)
     error_message = None
-    grupos_validos = ['adm', 'ic', 'mestrado', 'doutorado', 'professor']
     if request.method == 'POST' and form.is_valid():
         user = authenticate(request, username=form.cleaned_data['username'], password=form.cleaned_data['password'])
         if user is not None:
-            if user.is_active:
-                # Verifica se o usuário pertence a algum grupo válido
-                if user.groups.filter(name__in=grupos_validos).exists():
-                    login(request, user)
-                    return redirect('home')
-                else:
-                    error_message = 'Seu usuário não pertence a nenhum grupo autorizado.'
-            else:
+            if user_is_authorized_for_login(user):
+                login(request, user)
+                return redirect('home')
+            if not user.is_active:
                 error_message = 'Seu cadastro ainda não foi autorizado pelo administrador.'
+            else:
+                error_message = 'Seu usuário não pertence a nenhum grupo ou perfil autorizado.'
         else:
             error_message = 'Usuário ou senha inválidos.'
     return render(request, 'login.html', {'form': form, 'error_message': error_message})

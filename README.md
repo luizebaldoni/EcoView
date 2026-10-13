@@ -95,6 +95,27 @@ UID cadastrados no script:
 | `04C6676A2F6480` | Eduarda Schossler |
 | `0472EA622F6480` | Amanda Belitz |
 
+### Se o servidor disser que o usuário não faz parte de nenhum grupo autorizado
+
+Isso normalmente acontece quando a base de produção tem usuários já criados, mas sem o grupo Django ou sem o `PerfilUsuario` correspondente.
+
+Para corrigir isso no servidor, rode:
+
+```bash
+python scripts/sync_authorized_users.py
+```
+
+Se quiser apenas conferir o que será ajustado sem salvar nada:
+
+```bash
+python scripts/sync_authorized_users.py --dry-run
+```
+
+O script:
+- cria/ajusta o `PerfilUsuario`
+- adiciona o grupo correto (`ic`, `adm`, `professor`)
+- tenta preencher a base de usuários já existentes com as permissões esperadas
+
 ### Exemplo de integração no ESP8266
 
 O firmware envia o UID via `POST` em `text/plain` para o endpoint do Django. O servidor responde com JSON indicando se o ponto foi registrado com sucesso.

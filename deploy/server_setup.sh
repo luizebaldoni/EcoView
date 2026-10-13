@@ -87,6 +87,10 @@ python manage.py migrate --database=default || true
 python manage.py migrate --database=brise || true
 python manage.py migrate --database=pavimentos || true
 
+# Sync already-existing users/groups and seed IC cards/UID bindings
+python scripts/sync_authorized_users.py || true
+python scripts/seed_ic_cards.py || true
+
 # Collect static
 python manage.py collectstatic --noinput || true
 
